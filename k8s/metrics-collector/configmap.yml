@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: metrics-collector-conf
+  namespace: monitoring
+  labels:
+    app: metrics-collector
+    component: metrics-collector-conf
+data:
+  otel-collector-config: |
+    receivers:
+      prometheus:
+        config:
+          scrape_configs:
+            - job_name: 'quarkus-micrometer'
+              metrics_path: '/q/metrics'
+              scrape_interval: 3s
+              static_configs:
+                - targets: ['telemetry-app-service:8080']
+    processors:
+      batch:
+      memory_limiter:
+        # 80% of maximum memory up to 2G
+        limit_mib: 1500
+        # 25% of limit up to 2G
+        spike_limit_mib: 512
+        check_interval: 5s
+    exporters:
+      prometheus:
+        endpoint: "0.0.0.0:9090"
+    service:
+      pipelines:
+        metrics/1:
+          receivers: [prometheus]
+          processors: [memory_limiter, batch]
+          exporters: [prometheus]
