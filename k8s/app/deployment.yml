@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: telemetry-app
+  namespace: monitoring
+  labels:
+    app: telemetry-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: telemetry-app
+  template:
+    metadata:
+      labels:
+        app: telemetry-app
+    spec:
+      containers:
+        - name: telemetry-app
+          image: stmichael/telemetry-app:1.0.0-SNAPSHOT
+          ports:
+            - containerPort: 8080
+          resources:
+            requests:
+              cpu: 500m
+              memory: 500M
+            limits:
+              cpu: 1
+              memory: 1Gi
