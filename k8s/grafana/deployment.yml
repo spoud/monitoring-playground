@@ -58,8 +58,8 @@ spec:
           persistentVolumeClaim:
             claimName: grafana-pvc
         - configMap:
-            name: grafana-conf
+            name: grafana
             items:
-              - key: metrics.yml
-                path: metrics.yaml
+              - key: datasources.yml
+                path: datasources.yaml
           name: grafana-datasources

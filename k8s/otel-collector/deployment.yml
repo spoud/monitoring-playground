@@ -1,24 +1,21 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: metrics-collector
+  name: otel-collector
   namespace: monitoring
   labels:
-    app: metrics-collector
-    component: metrics-collector
+    app: otel-collector
 spec:
   selector:
     matchLabels:
-      app: metrics-collector
-      component: metrics-collector
+      app: otel-collector
   minReadySeconds: 5
   progressDeadlineSeconds: 120
   replicas: 1 #TODO - adjust this to your own requirements
   template:
     metadata:
       labels:
-        app: metrics-collector
-        component: metrics-collector
+        app: otel-collector
     spec:
       containers:
       - command:
@@ -45,21 +42,13 @@ spec:
           - name: GOMEMLIMIT
             value: 1600MiB
         volumeMounts:
-        - name: metrics-collector-config-vol
+        - name: otel-collector-config
           mountPath: /conf
-#        - name: otel-collector-secrets
-#          mountPath: /secrets
       volumes:
-        - configMap:
-            name: metrics-collector-conf
+        - name: otel-collector-config
+          configMap:
+            name: otel-collector
             items:
-              - key: otel-collector-config
+              - key: otel-collector-config.yaml
                 path: otel-collector-config.yaml
-          name: metrics-collector-config-vol
-#        - secret:
-#            name: otel-collector-secrets
-#            items:
-#              - key: cert.pem
-#                path: cert.pem
-#              - key: key.pem
-#                path: key.pem
+

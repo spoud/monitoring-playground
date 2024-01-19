@@ -18,6 +18,7 @@ spec:
       containers:
         - name: telemetry-app
           image: stmichael/telemetry-app:1.0.0-SNAPSHOT
+          imagePullPolicy: Never
           ports:
             - containerPort: 8080
           resources:
