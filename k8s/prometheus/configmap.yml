@@ -28,4 +28,4 @@ data:
       metrics_path: '/metrics'
       scrape_interval: 3s
       static_configs:
-        - targets: ['otel-collector:9090']
+        - targets: ['app-otel-collector:9090']

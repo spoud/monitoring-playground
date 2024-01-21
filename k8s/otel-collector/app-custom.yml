@@ -1,0 +1,63 @@
+fullnameOverride: app-otel-collector
+mode: deployment
+replicaCount: 1
+config:
+  receivers:
+    jaeger: null
+    prometheus: null
+    zipkin: null
+    otlp:
+      protocols:
+        grpc:
+          endpoint: 0.0.0.0:4317
+    prometheus/telemetry-app:
+      config:
+        scrape_configs:
+          - job_name: 'quarkus-micrometer'
+            metrics_path: '/q/metrics'
+            scrape_interval: 3s
+            static_configs:
+              - targets: ['telemetry-app:8080']
+  exporters:
+    prometheus:
+      endpoint: "0.0.0.0:9090"
+    otlp/tempo:
+      endpoint: tempo-distributor-discovery:4317
+      tls:
+        insecure: true
+  processors:
+    memory_limiter:
+      # 80% of maximum memory up to 2G
+      limit_mib: 1500
+      # 25% of limit up to 2G
+      spike_limit_mib: 512
+      check_interval: 5s
+    batch:
+      timeout: 200ms
+  service:
+    pipelines:
+      metrics:
+        receivers: [prometheus/telemetry-app]
+        processors: [memory_limiter, batch]
+        exporters: [prometheus]
+      traces:
+        receivers: [otlp]
+        processors: [memory_limiter, batch]
+        exporters: [otlp/tempo]
+ports:
+  otlp-http:
+    enabled: false
+  jaeger-compact:
+    enabled: false
+  jaeger-thrift:
+    enabled: false
+  jaeger-grpc:
+    enabled: false
+  zipkin:
+    enabled: false
+  prometheus:
+    enabled: true
+    containerPort: 9090
+    servicePort: 9090
+    hostPort: 9090
+    protocol: TCP
