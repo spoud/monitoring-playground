@@ -13,32 +13,13 @@ data:
     exporters:
       debug:
         verbosity: detailed
-      elasticsearch/log:
-        endpoints:
-        - http://elasticsearch-master:9200
-        user: elastic
-        password: gaga
-        logs_index: log_index
-        sending_queue:
-          enabled: true
-          num_consumers: 20
-          queue_size: 1000
       logging: {}
-      opensearch:
-        http:
-          auth:
-            authenticator: basicauth/client
-          endpoint: http://opensearch-cluster-master:9200
-          tls:
-            insecure: true
       loki:
         endpoint: http://loki:3100/loki/api/v1/push
+
     extensions:
-      basicauth/client:
-        client_auth:
-          password: admin
-          username: admin
       health_check: {}
+
     processors:
       batch:
         timeout: 200ms
@@ -69,12 +50,12 @@ data:
         - sources:
           - from: resource_attribute
             name: k8s.pod.uid
-      attributes:
+      attributes/loki-labels:
         actions:
           - action: insert
             key: loki.attribute.labels
             value: app.kubernetes.io.name, traceId, spanId
-      resource:
+      resource/loki-labels:
         attributes:
           - action: insert
             key: loki.resource.labels
@@ -90,6 +71,7 @@ data:
           statements:
           - set(attributes["app.kubernetes.io/name"], attributes["app"])
           - delete_key(attributes, "app")
+
     receivers:
       filelog:
         include:
@@ -97,73 +79,6 @@ data:
         include_file_name: false
         include_file_path: true
         operators:
-        # - id: get-format
-        #   routes:
-        #   - expr: body matches "^\\{"
-        #     output: parser-docker
-        #   - expr: body matches "^[^ Z]+ "
-        #     output: parser-crio
-        #   - expr: body matches "^[^ Z]+Z"
-        #     output: parser-containerd
-        #   type: router
-        # - id: parser-crio
-        #   regex: ^(?P<time>[^ Z]+) (?P<stream>stdout|stderr) (?P<logtag>[^ ]*) ?(?P<log>.*)$
-        #   timestamp:
-        #     layout: 2006-01-02T15:04:05.999999999Z07:00
-        #     layout_type: gotime
-        #     parse_from: attributes.time
-        #   type: regex_parser
-        # - combine_field: attributes.log
-        #   combine_with: ""
-        #   id: crio-recombine
-        #   is_last_entry: attributes.logtag == 'F'
-        #   max_log_size: 102400
-        #   output: extract_metadata_from_filepath
-        #   source_identifier: attributes["log.file.path"]
-        #   type: recombine
-        # - id: parser-containerd
-        #   regex: ^(?P<time>[^ ^Z]+Z) (?P<stream>stdout|stderr) (?P<logtag>[^ ]*) ?(?P<log>.*)$
-        #   timestamp:
-        #     layout: '%Y-%m-%dT%H:%M:%S.%LZ'
-        #     parse_from: attributes.time
-        #   type: regex_parser
-        # - combine_field: attributes.log
-        #   combine_with: ""
-        #   id: containerd-recombine
-        #   is_last_entry: attributes.logtag == 'F'
-        #   max_log_size: 102400
-        #   output: extract_metadata_from_filepath
-        #   source_identifier: attributes["log.file.path"]
-        #   type: recombine
-        # - id: parser-docker
-        #   output: extract_metadata_from_filepath
-        #   timestamp:
-        #     layout: '%Y-%m-%dT%H:%M:%S.%LZ'
-        #     parse_from: attributes.time
-        #   type: json_parser
-        # - id: extract_metadata_from_filepath
-        #   parse_from: attributes["log.file.path"]
-        #   regex: ^.*\/(?P<namespace>[^_]+)_(?P<pod_name>[^_]+)_(?P<uid>[a-f0-9\-]+)\/(?P<container_name>[^\._]+)\/(?P<restart_count>\d+)\.log$
-        #   type: regex_parser
-        # - from: attributes.stream
-        #   to: attributes["log.iostream"]
-        #   type: move
-        # - from: attributes.container_name
-        #   to: resource["k8s.container.name"]
-        #   type: move
-        # - from: attributes.namespace
-        #   to: resource["k8s.namespace.name"]
-        #   type: move
-        # - from: attributes.pod_name
-        #   to: resource["k8s.pod.name"]
-        #   type: move
-        # - from: attributes.restart_count
-        #   to: resource["k8s.container.restart_count"]
-        #   type: move
-        # - from: attributes.uid
-        #   to: resource["k8s.pod.uid"]
-        #   type: move
-
         # parse kubernetes logs
         - id: parse-containerd-log
           type: regex_parser
@@ -230,19 +145,15 @@ data:
     service:
       extensions:
       - health_check
-      - basicauth/client
       pipelines:
         logs:
-          exporters:
-          # - elasticsearch/log
-          - loki
-          # - otlphttp
-          - debug
-          processors:
-          - k8sattributes
-          - attributes
-          - resource
-          - memory_limiter
-          - transform/unify-app-name-label
           receivers:
           - filelog
+          processors:
+          - k8sattributes
+          - attributes/loki-labels
+          - resource/loki-labels
+          - memory_limiter
+          - transform/unify-app-name-label
+          exporters:
+          - loki
