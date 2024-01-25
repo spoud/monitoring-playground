@@ -2,10 +2,10 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: log-otel-collector
+  name: otel-collector
   labels:
     app.kubernetes.io/name: opentelemetry-collector
-    app.kubernetes.io/instance: log-otel-collector
+    app.kubernetes.io/instance: otel-collector
     app.kubernetes.io/version: "0.92.0"
 
 rules:

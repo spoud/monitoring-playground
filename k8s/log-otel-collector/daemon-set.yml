@@ -2,18 +2,18 @@
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
-  name: log-otel-collector-agent
+  name: otel-collector
   namespace: monitoring
   labels:
     app.kubernetes.io/name: opentelemetry-collector
-    app.kubernetes.io/instance: log-otel-collector
+    app.kubernetes.io/instance: otel-collector
     app.kubernetes.io/version: "0.92.0"
 
 spec:
   selector:
     matchLabels:
       app.kubernetes.io/name: opentelemetry-collector
-      app.kubernetes.io/instance: log-otel-collector
+      app.kubernetes.io/instance: otel-collector
       component: agent-collector
   updateStrategy:
     type: RollingUpdate
@@ -24,12 +24,12 @@ spec:
 
       labels:
         app.kubernetes.io/name: opentelemetry-collector
-        app.kubernetes.io/instance: log-otel-collector
+        app.kubernetes.io/instance: otel-collector
         component: agent-collector
 
     spec:
 
-      serviceAccountName: log-otel-collector
+      serviceAccountName: otel-collector
       securityContext:
         {}
       containers:
@@ -76,7 +76,7 @@ spec:
       volumes:
         - name: opentelemetry-collector-configmap
           configMap:
-            name: log-otel-collector-agent
+            name: otel-collector
             items:
               - key: relay
                 path: relay.yaml
