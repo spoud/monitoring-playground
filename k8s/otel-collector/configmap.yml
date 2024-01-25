@@ -14,8 +14,15 @@ data:
       debug:
         verbosity: detailed
       logging: {}
+      otlp/tempo:
+        endpoint: tempo-distributor-discovery:4317
+        tls:
+          insecure: true
+      prometheus:
+        endpoint: 0.0.0.0:9090
       loki:
         endpoint: http://loki:3100/loki/api/v1/push
+
 
     extensions:
       health_check: {}
@@ -73,6 +80,18 @@ data:
           - delete_key(attributes, "app")
 
     receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:4317
+      prometheus/telemetry-app:
+        config:
+          scrape_configs:
+            - job_name: 'telemetry-metrics'
+              metrics_path: '/q/metrics'
+              scrape_interval: 3s
+              static_configs:
+                - targets: ['telemetry-app:8080']
       filelog:
         include:
         - /var/log/pods/monitoring_telemetry-app-*/telemetry-app/*.log
@@ -142,10 +161,27 @@ data:
         retry_on_failure:
           enabled: true
         start_at: end
+
     service:
       extensions:
       - health_check
       pipelines:
+        metrics:
+          receivers:
+          - prometheus/telemetry-app
+          processors:
+          - memory_limiter
+          - batch
+          exporters:
+          - prometheus
+        traces:
+          receivers:
+          - otlp
+          processors:
+          - memory_limiter
+          - batch
+          exporters:
+          - otlp/tempo
         logs:
           receivers:
           - filelog
