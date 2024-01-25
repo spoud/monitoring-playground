@@ -2,7 +2,6 @@ Install helm repos
 ```
 helm repo add grafana https://grafana.github.io/helm-charts
 helm repo add open-telemetry https://open-telemetry.github.io/opentelemetry-helm-charts
-helm repo add opensearch https://opensearch-project.github.io/helm-charts/
 ```
 
 Install otel collector for apps to collect metrics and traces
@@ -24,6 +23,3 @@ Install Grafana Loki to collect logs
 ```
 helm -n monitoring install loki grafana/loki -f loki/custom.yml
 ```
-
-
-helm -n monitoring install opensearch opensearch/opensearch -f opensearch/custom2.yml
