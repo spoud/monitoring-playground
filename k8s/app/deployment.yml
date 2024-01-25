@@ -4,20 +4,20 @@ metadata:
   name: telemetry-app
   namespace: monitoring
   labels:
-    app: telemetry-app
+    app.kubernetes.io/name: telemetry-app
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: telemetry-app
+      app.kubernetes.io/name: telemetry-app
   template:
     metadata:
       labels:
-        app: telemetry-app
+        app.kubernetes.io/name: telemetry-app
     spec:
       containers:
         - name: telemetry-app
-          image: stmichael/telemetry-app:1.0.0-SNAPSHOT
+          image: stmichael/telemetry-app:1.1.0-SNAPSHOT
           imagePullPolicy: Never
           ports:
             - containerPort: 8080

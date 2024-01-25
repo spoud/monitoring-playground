@@ -5,7 +5,7 @@ metadata:
   namespace: monitoring
 spec:
   selector:
-    app: telemetry-app
+    app.kubernetes.io/name: telemetry-app
   ports:
     - protocol: TCP
       port: 8080

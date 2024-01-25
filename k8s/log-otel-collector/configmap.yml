@@ -1,0 +1,248 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: log-otel-collector-agent
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/name: opentelemetry-collector
+    app.kubernetes.io/instance: log-otel-collector
+    app.kubernetes.io/version: "0.92.0"
+data:
+  relay: |
+    exporters:
+      debug:
+        verbosity: detailed
+      elasticsearch/log:
+        endpoints:
+        - http://elasticsearch-master:9200
+        user: elastic
+        password: gaga
+        logs_index: log_index
+        sending_queue:
+          enabled: true
+          num_consumers: 20
+          queue_size: 1000
+      logging: {}
+      opensearch:
+        http:
+          auth:
+            authenticator: basicauth/client
+          endpoint: http://opensearch-cluster-master:9200
+          tls:
+            insecure: true
+      loki:
+        endpoint: http://loki:3100/loki/api/v1/push
+    extensions:
+      basicauth/client:
+        client_auth:
+          password: admin
+          username: admin
+      health_check: {}
+    processors:
+      batch:
+        timeout: 200ms
+      k8sattributes:
+        extract:
+          labels:
+          - tag_name: app.kubernetes.io.component
+            key: app.kubernetes.io/component
+            from: pod
+          - tag_name: app.kubernetes.io.name
+            key: app.kubernetes.io/name
+            from: pod
+          metadata:
+          - k8s.namespace.name
+          - k8s.deployment.name
+          - k8s.statefulset.name
+          - k8s.daemonset.name
+          - k8s.cronjob.name
+          - k8s.job.name
+          - k8s.node.name
+          - k8s.pod.name
+          - k8s.pod.uid
+          - k8s.pod.start_time
+        filter:
+          node_from_env_var: K8S_NODE_NAME
+        passthrough: false
+        pod_association:
+        - sources:
+          - from: resource_attribute
+            name: k8s.pod.uid
+      attributes:
+        actions:
+          - action: insert
+            key: loki.attribute.labels
+            value: app.kubernetes.io.name, traceId, spanId
+      resource:
+        attributes:
+          - action: insert
+            key: loki.resource.labels
+            value: app.kubernetes.io.name
+      memory_limiter:
+        check_interval: 5s
+        limit_mib: 1500
+        spike_limit_mib: 512
+      transform/unify-app-name-label:
+        error_mode: ignore
+        trace_statements:
+        - context: resource
+          statements:
+          - set(attributes["app.kubernetes.io/name"], attributes["app"])
+          - delete_key(attributes, "app")
+    receivers:
+      filelog:
+        include:
+        - /var/log/pods/monitoring_telemetry-app-*/telemetry-app/*.log
+        include_file_name: false
+        include_file_path: true
+        operators:
+        # - id: get-format
+        #   routes:
+        #   - expr: body matches "^\\{"
+        #     output: parser-docker
+        #   - expr: body matches "^[^ Z]+ "
+        #     output: parser-crio
+        #   - expr: body matches "^[^ Z]+Z"
+        #     output: parser-containerd
+        #   type: router
+        # - id: parser-crio
+        #   regex: ^(?P<time>[^ Z]+) (?P<stream>stdout|stderr) (?P<logtag>[^ ]*) ?(?P<log>.*)$
+        #   timestamp:
+        #     layout: 2006-01-02T15:04:05.999999999Z07:00
+        #     layout_type: gotime
+        #     parse_from: attributes.time
+        #   type: regex_parser
+        # - combine_field: attributes.log
+        #   combine_with: ""
+        #   id: crio-recombine
+        #   is_last_entry: attributes.logtag == 'F'
+        #   max_log_size: 102400
+        #   output: extract_metadata_from_filepath
+        #   source_identifier: attributes["log.file.path"]
+        #   type: recombine
+        # - id: parser-containerd
+        #   regex: ^(?P<time>[^ ^Z]+Z) (?P<stream>stdout|stderr) (?P<logtag>[^ ]*) ?(?P<log>.*)$
+        #   timestamp:
+        #     layout: '%Y-%m-%dT%H:%M:%S.%LZ'
+        #     parse_from: attributes.time
+        #   type: regex_parser
+        # - combine_field: attributes.log
+        #   combine_with: ""
+        #   id: containerd-recombine
+        #   is_last_entry: attributes.logtag == 'F'
+        #   max_log_size: 102400
+        #   output: extract_metadata_from_filepath
+        #   source_identifier: attributes["log.file.path"]
+        #   type: recombine
+        # - id: parser-docker
+        #   output: extract_metadata_from_filepath
+        #   timestamp:
+        #     layout: '%Y-%m-%dT%H:%M:%S.%LZ'
+        #     parse_from: attributes.time
+        #   type: json_parser
+        # - id: extract_metadata_from_filepath
+        #   parse_from: attributes["log.file.path"]
+        #   regex: ^.*\/(?P<namespace>[^_]+)_(?P<pod_name>[^_]+)_(?P<uid>[a-f0-9\-]+)\/(?P<container_name>[^\._]+)\/(?P<restart_count>\d+)\.log$
+        #   type: regex_parser
+        # - from: attributes.stream
+        #   to: attributes["log.iostream"]
+        #   type: move
+        # - from: attributes.container_name
+        #   to: resource["k8s.container.name"]
+        #   type: move
+        # - from: attributes.namespace
+        #   to: resource["k8s.namespace.name"]
+        #   type: move
+        # - from: attributes.pod_name
+        #   to: resource["k8s.pod.name"]
+        #   type: move
+        # - from: attributes.restart_count
+        #   to: resource["k8s.container.restart_count"]
+        #   type: move
+        # - from: attributes.uid
+        #   to: resource["k8s.pod.uid"]
+        #   type: move
+
+        # parse kubernetes logs
+        - id: parse-containerd-log
+          type: regex_parser
+          regex: ^(?P<time>[^\s]+) (?P<stream>stdout|stderr) (?P<logtag>[^\s]*) ?(?P<log>.*)$
+          timestamp:
+            layout: '%Y-%m-%dT%H:%M:%S.%LZ'
+            parse_from: attributes.time
+        - id: extract_metadata_from_filepath
+          parse_from: attributes["log.file.path"]
+          regex: ^.*\/([^_]+)_([^_]+)_(?P<uid>[a-f0-9\-]+)\/([^\._]+)\/(\d+)\.log$
+          type: regex_parser
+        - id: recombine-containerd-logs
+          type: recombine
+          combine_field: attributes.log
+          combine_with: ""
+          is_last_entry: attributes.logtag == 'F'
+          max_log_size: 102400
+          source_identifier: attributes["log.file.path"]
+
+        # parse app logs
+        - id: parse-app-logs
+          type: regex_parser
+          parse_from: attributes.log
+          regex: ^([^\s]+) (?P<severity>[^\s]+) \{(?P<context>[^\}]*)\} \[.*\] \(.*\) (.*)$
+          severity:
+            parse_from: attributes.severity
+        - id: parse-trace-id
+          type: regex_parser
+          parse_from: attributes.context
+          regex: 'traceId=(?P<traceId>[\d\w]+)'
+          trace:
+            trace_id:
+              parse_from: attributes.traceId
+        - id: parse-span-id
+          type: regex_parser
+          parse_from: attributes.context
+          regex: 'spanId=(?P<spanId>[\d\w]+)'
+          trace:
+            span_id:
+              parse_from: attributes.spanId
+
+        # move attributes to correct fields
+        - type: move
+          from: attributes.log
+          to: body
+        - type: move
+          from: attributes.uid
+          to: resource["k8s.pod.uid"]
+
+        # remove temporary attributes
+        - type: remove
+          field: attributes.time
+        - type: remove
+          field: attributes.stream
+        - type: remove
+          field: attributes.logtag
+        - type: remove
+          field: attributes.severity
+        - type: remove
+          field: attributes.context
+        retry_on_failure:
+          enabled: true
+        start_at: end
+    service:
+      extensions:
+      - health_check
+      - basicauth/client
+      pipelines:
+        logs:
+          exporters:
+          # - elasticsearch/log
+          - loki
+          # - otlphttp
+          - debug
+          processors:
+          - k8sattributes
+          - attributes
+          - resource
+          - memory_limiter
+          - transform/unify-app-name-label
+          receivers:
+          - filelog
