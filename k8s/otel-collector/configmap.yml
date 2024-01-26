@@ -15,7 +15,7 @@ data:
         verbosity: detailed
       logging: {}
       otlp/tempo:
-        endpoint: tempo-distributor-discovery:4317
+        endpoint: tempo:4317
         tls:
           insecure: true
       prometheus:
