@@ -37,8 +37,6 @@ spec:
         app.kubernetes.io/component: single-binary
         app.kubernetes.io/part-of: memberlist
     spec:
-      serviceAccountName: loki
-      automountServiceAccountToken: true
       enableServiceLinks: true
 
       securityContext:
