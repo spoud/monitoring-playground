@@ -9,11 +9,13 @@ repositories {
 }
 
 dependencies {
-    implementation 'io.quarkus:quarkus-opentelemetry'
     implementation enforcedPlatform("${quarkusPlatformGroupId}:${quarkusPlatformArtifactId}:${quarkusPlatformVersion}")
     implementation 'io.quarkus:quarkus-resteasy-reactive'
-    implementation 'io.quarkus:quarkus-micrometer-registry-prometheus'
     implementation 'io.quarkus:quarkus-arc'
+
+    implementation 'io.opentelemetry:opentelemetry-api:1.43.1'
+    implementation 'io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations:2.0.0'
+
     testImplementation 'io.quarkus:quarkus-junit5'
 }
 
@@ -35,4 +37,11 @@ compileJava {
 
 compileTestJava {
     options.encoding = 'UTF-8'
+}
+
+quarkusDev {
+    jvmArgs += "-javaagent:${layout.projectDirectory.getAsFile()}/opentelemetry-javaagent.jar"
+    jvmArgs += '-Dotel.traces.exporter=logging-otlp'
+    jvmArgs += '-Dotel.metrics.exporter=logging-otlp'
+    jvmArgs += '-Dotel.logs.exporter=logging-otlp'
 }

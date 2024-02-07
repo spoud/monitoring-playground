@@ -1,29 +1,29 @@
 package org.acme.telemetry.resources;
 
-import io.micrometer.core.instrument.MeterRegistry;
+import io.opentelemetry.api.GlobalOpenTelemetry;
+import io.opentelemetry.api.common.AttributeKey;
+import io.opentelemetry.api.common.Attributes;
+import io.opentelemetry.api.metrics.LongCounter;
+import jakarta.inject.Inject;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
-import org.jboss.logging.Logger;
 
 @Path("/")
 @Produces("text/plain")
 public class HelloResource {
 
-  private static final Logger LOG = Logger.getLogger(HelloResource.class);
+  @Inject
+  private HelloService service;
 
-  private final MeterRegistry meterRegistry;
-
-  public HelloResource(MeterRegistry meterRegistry) {
-    this.meterRegistry = meterRegistry;
-  }
+  private LongCounter helloCounter = GlobalOpenTelemetry.get().getMeter(HelloResource.class.getName()).counterBuilder("hello-counter").build();
 
   @GET
   @Path("hello/{name}")
   public String hello(@PathParam("name") String name) {
-    meterRegistry.counter("acme.hello", "type", name).increment();
-    LOG.info(String.format("I said hello to %s", name));
+    service.sayHello(name);
+    helloCounter.add(1, Attributes.of(AttributeKey.stringKey("name"), name));
     return name;
   }
 
