@@ -10,26 +10,23 @@ metadata:
     app.kubernetes.io/version: "0.92.0"
 data:
   relay: |
-    exporters:
-      debug:
-        verbosity: detailed
-      logging: {}
-      otlp/tempo:
-        endpoint: tempo:4317
-        tls:
-          insecure: true
-      prometheus:
-        endpoint: 0.0.0.0:9090
-      loki:
-        endpoint: http://loki:3100/loki/api/v1/push
-
-
     extensions:
       health_check: {}
+
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:4317
 
     processors:
       batch:
         timeout: 200ms
+      memory_limiter:
+        check_interval: 5s
+        limit_mib: 1500
+        spike_limit_mib: 512
+
       k8sattributes:
         extract:
           labels:
@@ -57,20 +54,25 @@ data:
         - sources:
           - from: resource_attribute
             name: k8s.pod.uid
+
       attributes/loki-labels:
         actions:
           - action: insert
             key: loki.attribute.labels
-            value: app.kubernetes.io.name, traceId, spanId
+            value: app.kubernetes.io.name
       resource/loki-labels:
         attributes:
           - action: insert
             key: loki.resource.labels
-            value: app.kubernetes.io.name
-      memory_limiter:
-        check_interval: 5s
-        limit_mib: 1500
-        spike_limit_mib: 512
+            value: app.kubernetes.io.name, trace_id, span_id
+
+      transform/add-trace-labels-to-attributes:
+        error_mode: ignore
+        log_statements:
+        - context: log
+          statements:
+          - set(resource.attributes["trace_id"], trace_id.string)
+          - set(resource.attributes["span_id"], span_id.string)
       transform/unify-app-name-label:
         error_mode: ignore
         trace_statements:
@@ -79,88 +81,19 @@ data:
           - set(attributes["app.kubernetes.io/name"], attributes["app"])
           - delete_key(attributes, "app")
 
-    receivers:
-      otlp:
-        protocols:
-          grpc:
-            endpoint: 0.0.0.0:4317
-      prometheus/telemetry-app:
-        config:
-          scrape_configs:
-            - job_name: 'telemetry-metrics'
-              metrics_path: '/q/metrics'
-              scrape_interval: 3s
-              static_configs:
-                - targets: ['telemetry-app:8080']
-      filelog:
-        include:
-        - /var/log/pods/monitoring_telemetry-app-*/telemetry-app/*.log
-        include_file_name: false
-        include_file_path: true
-        operators:
-        # parse kubernetes logs
-        - id: parse-containerd-log
-          type: regex_parser
-          regex: ^(?P<time>[^\s]+) (?P<stream>stdout|stderr) (?P<logtag>[^\s]*) ?(?P<log>.*)$
-          timestamp:
-            layout: '%Y-%m-%dT%H:%M:%S.%LZ'
-            parse_from: attributes.time
-        - id: extract_metadata_from_filepath
-          parse_from: attributes["log.file.path"]
-          regex: ^.*\/([^_]+)_([^_]+)_(?P<uid>[a-f0-9\-]+)\/([^\._]+)\/(\d+)\.log$
-          type: regex_parser
-        - id: recombine-containerd-logs
-          type: recombine
-          combine_field: attributes.log
-          combine_with: ""
-          is_last_entry: attributes.logtag == 'F'
-          max_log_size: 102400
-          source_identifier: attributes["log.file.path"]
-
-        # parse app logs
-        - id: parse-app-logs
-          type: regex_parser
-          parse_from: attributes.log
-          regex: ^([^\s]+) (?P<severity>[^\s]+) \{(?P<context>[^\}]*)\} \[.*\] \(.*\) (.*)$
-          severity:
-            parse_from: attributes.severity
-        - id: parse-trace-id
-          type: regex_parser
-          parse_from: attributes.context
-          regex: 'traceId=(?P<traceId>[\d\w]+)'
-          trace:
-            trace_id:
-              parse_from: attributes.traceId
-        - id: parse-span-id
-          type: regex_parser
-          parse_from: attributes.context
-          regex: 'spanId=(?P<spanId>[\d\w]+)'
-          trace:
-            span_id:
-              parse_from: attributes.spanId
-
-        # move attributes to correct fields
-        - type: move
-          from: attributes.log
-          to: body
-        - type: move
-          from: attributes.uid
-          to: resource["k8s.pod.uid"]
-
-        # remove temporary attributes
-        - type: remove
-          field: attributes.time
-        - type: remove
-          field: attributes.stream
-        - type: remove
-          field: attributes.logtag
-        - type: remove
-          field: attributes.severity
-        - type: remove
-          field: attributes.context
-        retry_on_failure:
-          enabled: true
-        start_at: end
+    exporters:
+      debug:
+        verbosity: detailed
+      otlp/tempo:
+        endpoint: tempo:4317
+        tls:
+          insecure: true
+      otlphttp/prometheus:
+        endpoint: http://prometheus:9090/api/v1/otlp
+        tls:
+          insecure: true
+      loki:
+        endpoint: http://loki:3100/loki/api/v1/push
 
     service:
       extensions:
@@ -168,12 +101,12 @@ data:
       pipelines:
         metrics:
           receivers:
-          - prometheus/telemetry-app
+          - otlp
           processors:
           - memory_limiter
           - batch
           exporters:
-          - prometheus
+          - otlphttp/prometheus
         traces:
           receivers:
           - otlp
@@ -184,12 +117,15 @@ data:
           - otlp/tempo
         logs:
           receivers:
-          - filelog
+          - otlp
           processors:
+          - memory_limiter
           - k8sattributes
+          - batch
+          - transform/unify-app-name-label
+          - transform/add-trace-labels-to-attributes
           - attributes/loki-labels
           - resource/loki-labels
-          - memory_limiter
-          - transform/unify-app-name-label
           exporters:
+          - debug
           - loki
