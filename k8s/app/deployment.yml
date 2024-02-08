@@ -30,6 +30,8 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.name
+            - name: OTEL_SERVICE_NAME
+              value: telemetry-app
             - name: OTEL_LOGS_EXPORTER
               value: otlp
             - name: OTEL_METRICS_EXPORTER
