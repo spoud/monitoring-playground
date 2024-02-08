@@ -105,6 +105,8 @@ data:
           processors:
           - memory_limiter
           - batch
+          - k8sattributes
+          - transform/unify-app-name-label
           exporters:
           - otlphttp/prometheus
         traces:
@@ -113,6 +115,8 @@ data:
           processors:
           - memory_limiter
           - batch
+          - k8sattributes
+          - transform/unify-app-name-label
           exporters:
           - otlp/tempo
         logs:
@@ -120,8 +124,8 @@ data:
           - otlp
           processors:
           - memory_limiter
-          - k8sattributes
           - batch
+          - k8sattributes
           - transform/unify-app-name-label
           - transform/add-trace-labels-to-attributes
           - attributes/loki-labels
