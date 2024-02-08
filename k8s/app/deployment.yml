@@ -22,6 +22,14 @@ spec:
           ports:
             - containerPort: 8080
           env:
+            - name: POD_UID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.uid
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
             - name: OTEL_LOGS_EXPORTER
               value: otlp
             - name: OTEL_METRICS_EXPORTER
@@ -30,6 +38,8 @@ spec:
               value: otlp
             - name: OTEL_EXPORTER_OTLP_ENDPOINT
               value: http://otel-collector:4317
+            - name: OTEL_RESOURCE_ATTRIBUTES
+              value: service.instance.id=$(POD_NAME),k8s.pod.uid=$(POD_UID)
           resources:
             requests:
               cpu: 500m
