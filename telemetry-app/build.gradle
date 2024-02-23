@@ -21,7 +21,7 @@ dependencies {
 }
 
 group 'org.acme'
-version '1.2.0-SNAPSHOT'
+version '1.3.0-SNAPSHOT'
 
 java {
     sourceCompatibility = JavaVersion.VERSION_17
@@ -41,8 +41,8 @@ compileTestJava {
 }
 
 quarkusDev {
-    jvmArgs += "-javaagent:${layout.projectDirectory.getAsFile()}/opentelemetry-javaagent.jar"
-    jvmArgs += '-Dotel.traces.exporter=logging-otlp'
-    jvmArgs += '-Dotel.metrics.exporter=logging-otlp'
-    jvmArgs += '-Dotel.logs.exporter=logging-otlp'
+//    jvmArgs += "-javaagent:${layout.projectDirectory.getAsFile()}/opentelemetry-javaagent.jar"
+//    jvmArgs += '-Dotel.traces.exporter=logging-otlp'
+//    jvmArgs += '-Dotel.metrics.exporter=logging-otlp'
+//    jvmArgs += '-Dotel.logs.exporter=logging-otlp'
 }

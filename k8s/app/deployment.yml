@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: telemetry-app
-          image: stmichael/telemetry-app:1.2.0-SNAPSHOT
+          image: stmichael/telemetry-app:1.3.0-SNAPSHOT
           imagePullPolicy: Never
           ports:
             - containerPort: 8080
@@ -42,6 +42,24 @@ spec:
               value: http://otel-collector:4317
             - name: OTEL_RESOURCE_ATTRIBUTES
               value: service.instance.id=$(POD_NAME),k8s.pod.uid=$(POD_UID)
+            - name: PYROSCOPE_APPLICATION_NAME
+              value: rideshare.java.push.app
+            - name: PYROSCOPE_FORMAT
+              value: jfr
+            - name: PYROSCOPE_PROFILING_INTERVAL
+              value: 10ms
+            - name: PYROSCOPE_PROFILER_EVENT
+              value: itimer
+            - name: PYROSCOPE_PROFILER_LOCK
+              value: 10ms
+            - name: PYROSCOPE_PROFILER_ALLOC
+              value: 512k
+            - name: PYROSCOPE_UPLOAD_INTERVAL
+              value: 15s
+            - name: PYROSCOPE_LOG_LEVEL
+              value: debug
+            - name: PYROSCOPE_SERVER_ADDRESS
+              value: http://pyroscope:4040
           resources:
             requests:
               cpu: 500m

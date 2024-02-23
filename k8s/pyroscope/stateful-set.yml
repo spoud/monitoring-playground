@@ -1,0 +1,88 @@
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: pyroscope
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/name: pyroscope
+    app.kubernetes.io/instance: pyroscope
+    app.kubernetes.io/version: "1.3.0"
+    app.kubernetes.io/component: "all"
+spec:
+  # serviceName: pyroscope-headless
+  podManagementPolicy: Parallel
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: pyroscope
+      app.kubernetes.io/instance: pyroscope
+      app.kubernetes.io/component: "all"
+  template:
+    metadata:
+      annotations:
+        checksum/config: a314c85e0bf8d8286ebbb7c0d25367617871bfe334a43fe6b600a1d553845a30
+        profiles.grafana.com/cpu.port_name: http2
+        profiles.grafana.com/cpu.scrape: "true"
+        profiles.grafana.com/goroutine.port_name: http2
+        profiles.grafana.com/goroutine.scrape: "true"
+        profiles.grafana.com/memory.port_name: http2
+        profiles.grafana.com/memory.scrape: "true"
+      labels:
+        app.kubernetes.io/name: pyroscope
+        app.kubernetes.io/instance: pyroscope
+        app.kubernetes.io/component: "all"
+        name: "pyroscope"
+    spec:
+      # serviceAccountName: pyroscope
+      securityContext:
+        fsGroup: 10001
+        runAsNonRoot: true
+        runAsUser: 10001
+      dnsPolicy: ClusterFirst
+      containers:
+        - name: "pyroscope"
+          securityContext:
+            {}
+          image: "grafana/pyroscope:1.3.0"
+          imagePullPolicy: IfNotPresent
+          args:
+            - "-target=all"
+            - "-self-profiling.disable-push=true"
+            - "-server.http-listen-port=4040"
+            - "-memberlist.cluster-label=monitoring-pyroscope"
+            - "-memberlist.join=dns+pyroscope-memberlist.monitoring.svc.cluster.local.:7946"
+            - "-config.file=/etc/pyroscope/config.yaml"
+            - "-runtime-config.file=/etc/pyroscope/overrides/overrides.yaml"
+            - "-log.level=debug"
+          ports:
+            - name: http2
+              containerPort: 4040
+              protocol: TCP
+            - name: memberlist
+              containerPort: 7946
+              protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: http2
+              scheme: HTTP
+          volumeMounts:
+            - name: config
+              mountPath: /etc/pyroscope/config.yaml
+              subPath: config.yaml
+            - name: overrides-config
+              mountPath: /etc/pyroscope/overrides/
+            - name: data
+              mountPath: /data
+          resources:
+            {}
+      volumes:
+        - name: config
+          configMap:
+            name: pyroscope-config
+        - name: overrides-config
+          configMap:
+            name: pyroscope-overrides-config
+        - name: data
+          emptyDir: {}
