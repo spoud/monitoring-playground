@@ -9,6 +9,7 @@ import java.util.Random;
 import java.util.stream.LongStream;
 import org.eclipse.microprofile.reactive.messaging.Channel;
 import org.eclipse.microprofile.reactive.messaging.Emitter;
+import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.jboss.logging.Logger;
 
 @ApplicationScoped
@@ -19,14 +20,17 @@ public class HelloService {
   @Channel("hello")
   Emitter<String> helloEmitter;
 
+  @RestClient
+  RandomNumberService randomNumberService;
+
   Random random = new Random();
 
   @WithSpan
   public void sayHello(@SpanAttribute String name) {
-    // simulate computationally expensive operation
-    Arrays.sort(LongStream.rangeClosed(0, 10000000).map((x) -> random.nextLong()).toArray());
+    long r = randomNumberService.get();
 
     LOG.info(String.format("I said hello to %s", name));
+    LOG.info(r);
     helloEmitter.send(name);
   }
 }

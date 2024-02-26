@@ -260,7 +260,7 @@ data:
             },
             "showHeader": true
           },
-          "pluginVersion": "10.3.1",
+          "pluginVersion": "10.3.3",
           "targets": [
             {
               "datasource": {
@@ -269,7 +269,7 @@ data:
               },
               "key": "Q-eee02b0c-6e70-4b2f-acd9-2d23f9b9acf9-0",
               "limit": 20,
-              "query": "{span.http.status_code>=200 && span.http.status_code<300}",
+              "query": "{name=\"GET /hello/{name}\"}",
               "queryType": "traceql",
               "refId": "A",
               "tableType": "traces"
@@ -278,6 +278,35 @@ data:
           "title": "Successful requests",
           "transformations": [],
           "type": "table"
+        },
+        {
+          "datasource": {
+            "type": "grafana-pyroscope-datasource",
+            "uid": "P535E52E4A2616EBE"
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 8
+          },
+          "id": 5,
+          "targets": [
+            {
+              "datasource": {
+                "type": "grafana-pyroscope-datasource",
+                "uid": "P535E52E4A2616EBE"
+              },
+              "groupBy": [],
+              "labelSelector": "{service_name=\"random-generator\"}",
+              "profileTypeId": "process_cpu:cpu:nanoseconds:cpu:nanoseconds",
+              "queryType": "profile",
+              "refId": "A",
+              "spanSelector": []
+            }
+          ],
+          "title": "Panel Title",
+          "type": "flamegraph"
         }
       ],
       "refresh": "",

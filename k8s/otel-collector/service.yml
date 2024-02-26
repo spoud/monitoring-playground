@@ -16,9 +16,17 @@ spec:
       targetPort: 4317
       protocol: TCP
       appProtocol: grpc
+    - name: otlp-http
+      port: 4318
+      targetPort: 4318
+      protocol: TCP
     - name: prometheus
       port: 9090
       targetPort: 9090
+      protocol: TCP
+    - name: zipkin
+      port: 9411
+      targetPort: 9411
       protocol: TCP
   selector:
     app.kubernetes.io/name: opentelemetry-collector

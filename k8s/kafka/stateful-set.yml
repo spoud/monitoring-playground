@@ -44,7 +44,9 @@ spec:
         - name: OTEL_METRICS_EXPORTER
           value: otlp
         - name: OTEL_EXPORTER_OTLP_ENDPOINT
-          value: http://otel-collector:4317
+          value: http://otel-collector:4318
+        - name: OTEL_EXPORTER_OTLP_PROTOCOL
+          value: http/protobuf
         ports:
         - containerPort: 9092
         - containerPort: 9093
