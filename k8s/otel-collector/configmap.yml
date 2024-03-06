@@ -99,6 +99,9 @@ data:
         tls:
           insecure: true
 
+    connectors:
+      servicegraph:
+
     service:
       extensions:
       - health_check
@@ -106,6 +109,7 @@ data:
         metrics:
           receivers:
           - otlp
+          - servicegraph
           processors:
           - memory_limiter
           - batch
@@ -122,8 +126,8 @@ data:
           - k8sattributes
           - transform/unify-app-name-label
           exporters:
-          #- debug
           - otlp/tempo
+          - servicegraph
         logs:
           receivers:
           - otlp
@@ -136,5 +140,4 @@ data:
           - attributes/loki-labels
           - resource/loki-labels
           exporters:
-          #- debug
           - loki

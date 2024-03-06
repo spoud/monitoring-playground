@@ -12,6 +12,7 @@ data:
     datasources:
       - name: Metrics
         type: prometheus
+        uid: metrics
         access: proxy
         # Access mode - proxy (server in the UI) or direct (browser in the UI).
         url: http://prometheus:9090
@@ -25,17 +26,24 @@ data:
           incrementalQueryOverlapWindow: 10m
       - name: Traces
         type: tempo
+        uid: traces
         access: proxy
         # Access mode - proxy (server in the UI) or direct (browser in the UI).
         url: http://tempo:3100
+        jsonData:
+          httpMethod: GET
+          serviceMap:
+            datasourceUid: metrics
       - name: Logs
         type: loki
+        uid: logs
         access: proxy
         url: http://loki:3100
         jsonData:
           maxLines: 1000
       - name: Profiles
         type: grafana-pyroscope-datasource
+        uid: profiles
         url: http://pyroscope:4040
         jsonData:
           minStep: '15s'
