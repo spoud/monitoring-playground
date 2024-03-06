@@ -34,6 +34,8 @@ data:
           httpMethod: GET
           serviceMap:
             datasourceUid: metrics
+          nodeGraph:
+            enabled: true
       - name: Logs
         type: loki
         uid: logs
