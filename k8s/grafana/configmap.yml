@@ -32,6 +32,20 @@ data:
         url: http://tempo:3100
         jsonData:
           httpMethod: GET
+          tracesToLogsV2:
+            datasourceUid: 'logs'
+            spanStartTimeShift: '-1m'
+            spanEndTimeShift: '1m'
+            filterByTraceID: true
+            filterBySpanID: false
+            customQuery: false
+          tracesToProfiles:
+            datasourceUid: 'profiles'
+            tags:
+              - key: 'service.name'
+                value: service_name
+            profileTypeId: 'process_cpu-cpu'
+            customQuery: false
           serviceMap:
             datasourceUid: metrics
           nodeGraph:

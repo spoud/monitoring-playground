@@ -22,7 +22,7 @@ dependencies {
 }
 
 group 'org.acme'
-version '1.4.0-SNAPSHOT'
+version '1.5.0-SNAPSHOT'
 
 java {
     sourceCompatibility = JavaVersion.VERSION_17

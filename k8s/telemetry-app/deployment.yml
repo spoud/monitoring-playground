@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: telemetry-app
-          image: stmichael/telemetry-app:1.4.0-SNAPSHOT
+          image: stmichael/telemetry-app:1.5.0-SNAPSHOT
           imagePullPolicy: Never
           ports:
             - containerPort: 8080
@@ -44,6 +44,8 @@ spec:
               value: http/protobuf
             - name: OTEL_RESOURCE_ATTRIBUTES
               value: service.instance.id=$(POD_NAME),k8s.pod.uid=$(POD_UID)
+            - name: OTEL_PYROSCOPE_START_PROFILING
+              value: 'true'
             - name: PYROSCOPE_APPLICATION_NAME
               value: telemetry-app
             - name: PYROSCOPE_FORMAT
