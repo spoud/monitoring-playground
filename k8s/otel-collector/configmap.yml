@@ -20,6 +20,17 @@ data:
             endpoint: 0.0.0.0:4317
           http:
             endpoint: 0.0.0.0:4318
+      kubeletstats:
+        collection_interval: 20s
+        initial_delay: 1s
+        auth_type: "serviceAccount"
+        endpoint: "https://${env:K8S_NODE_NAME}:10250"
+        insecure_skip_verify: true
+        extra_metadata_labels:
+        - container.id
+        - k8s.volume.type
+        k8s_api_config:
+          auth_type: serviceAccount
 
     processors:
       batch:
@@ -82,6 +93,15 @@ data:
           statements:
           - set(attributes["app.kubernetes.io/name"], attributes["app"])
           - delete_key(attributes, "app")
+      transform/kubelet-metric-labels:
+        error_mode: ignore
+        metric_statements:
+        - context: datapoint
+          statements:
+          - set(attributes["k8s.pod.name"], resource.attributes["k8s.pod.name"])
+          - set(attributes["k8s.namespace.name"], resource.attributes["k8s.namespace.name"])
+          - set(attributes["k8s.container.name"], resource.attributes["k8s.container.name"])
+          - set(attributes["k8s.node.name"], resource.attributes["k8s.node.name"])
 
     exporters:
       debug:
@@ -106,6 +126,14 @@ data:
       extensions:
       - health_check
       pipelines:
+        metrics/kubelets:
+          receivers:
+          - kubeletstats
+          processors:
+          - transform/kubelet-metric-labels
+          exporters:
+          - otlphttp/prometheus
+          - debug
         metrics:
           receivers:
           - otlp
