@@ -31,6 +31,8 @@ data:
         - k8s.volume.type
         k8s_api_config:
           auth_type: serviceAccount
+      k8s_cluster:
+        collection_interval: 20s
 
     processors:
       batch:
@@ -102,6 +104,25 @@ data:
           - set(attributes["k8s.namespace.name"], resource.attributes["k8s.namespace.name"])
           - set(attributes["k8s.container.name"], resource.attributes["k8s.container.name"])
           - set(attributes["k8s.node.name"], resource.attributes["k8s.node.name"])
+      transform/k8-cluster-metric-labels:
+        error_mode: ignore
+        metric_statements:
+        - context: datapoint
+          statements:
+          - set(attributes["k8s.namespace.name"], resource.attributes["k8s.namespace.name"])
+          - set(attributes["k8s.node.name"], resource.attributes["k8s.node.name"])
+          - set(attributes["container.image.name"], resource.attributes["container.image.name"])
+          - set(attributes["container.image.tag"], resource.attributes["container.image.tag"])
+          - set(attributes["k8s.pod.name"], resource.attributes["k8s.pod.name"])
+          - set(attributes["k8s.container.name"], resource.attributes["k8s.container.name"])
+          - set(attributes["k8s.replicaset.name"], resource.attributes["k8s.replicaset.name"])
+          - set(attributes["k8s.replicationcontroller.name"], resource.attributes["k8s.replicationcontroller.name"])
+          - set(attributes["k8s.resourcequota.name"], resource.attributes["k8s.resourcequota.name"])
+          - set(attributes["k8s.statefulset.name"], resource.attributes["k8s.statefulset.name"])
+          - set(attributes["k8s.deployment.name"], resource.attributes["k8s.deployment.name"])
+          - set(attributes["k8s.daemonset.name"], resource.attributes["k8s.daemonset.name"])
+          - set(attributes["k8s.hpa.name"], resource.attributes["k8s.hpa.name"])
+          - set(attributes["k8s.job.name"], resource.attributes["k8s.job.name"])
 
     exporters:
       debug:
@@ -133,7 +154,13 @@ data:
           - transform/kubelet-metric-labels
           exporters:
           - otlphttp/prometheus
-          - debug
+        metrics/k8s-cluster:
+          receivers:
+          - k8s_cluster
+          processors:
+          - transform/k8-cluster-metric-labels
+          exporters:
+          - otlphttp/prometheus
         metrics:
           receivers:
           - otlp
