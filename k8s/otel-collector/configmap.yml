@@ -109,12 +109,19 @@ data:
         metrics:
           receivers:
           - otlp
-          - servicegraph
           processors:
           - memory_limiter
           - batch
           - k8sattributes
           - transform/unify-app-name-label
+          exporters:
+          - otlphttp/prometheus
+        metrics/connector:
+          receivers:
+          - servicegraph
+          processors:
+          - memory_limiter
+          - batch
           exporters:
           - otlphttp/prometheus
         traces:
