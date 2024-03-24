@@ -63,6 +63,15 @@ data:
         url: http://pyroscope:4040
         jsonData:
           minStep: '15s'
+      - name: Pixie
+        type: pixie-pixie-datasource
+        uid: pixie
+        access: proxy
+        orgId: 1
+        editable: false
+        secureJsonData:
+          apiKey: px-api-1cb38603-882f-4708-9da9-949f42ef90b6
+          clusterId: b4a1c71d-9557-4aaa-a4e3-a6f993cb98cf
   dashboards.yml: |
     apiVersion: 1
 
@@ -99,7 +108,7 @@ data:
         {
           "datasource": {
             "type": "loki",
-            "uid": "PEA2100DC89AE9FE2"
+            "uid": "logs"
           },
           "gridPos": {
             "h": 8,
@@ -123,7 +132,7 @@ data:
             {
               "datasource": {
                 "type": "loki",
-                "uid": "PEA2100DC89AE9FE2"
+                "uid": "logs"
               },
               "editorMode": "code",
               "expr": "{app_kubernetes_io_name=\"telemetry-app\", trace_id!=\"00000000000000000000000000000000\"}",
@@ -137,7 +146,7 @@ data:
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PA58DA793C7250F1B"
+            "uid": "metrics"
           },
           "fieldConfig": {
             "defaults": {
@@ -217,7 +226,7 @@ data:
             {
               "datasource": {
                 "type": "prometheus",
-                "uid": "PA58DA793C7250F1B"
+                "uid": "metrics"
               },
               "disableTextWrap": false,
               "editorMode": "code",
@@ -236,7 +245,7 @@ data:
         {
           "datasource": {
             "type": "tempo",
-            "uid": "P998741A58ED2B411"
+            "uid": "traces"
           },
           "fieldConfig": {
             "defaults": {
@@ -289,7 +298,7 @@ data:
             {
               "datasource": {
                 "type": "tempo",
-                "uid": "P998741A58ED2B411"
+                "uid": "traces"
               },
               "key": "Q-eee02b0c-6e70-4b2f-acd9-2d23f9b9acf9-0",
               "limit": 20,
@@ -306,7 +315,7 @@ data:
         {
           "datasource": {
             "type": "grafana-pyroscope-datasource",
-            "uid": "P535E52E4A2616EBE"
+            "uid": "profiles"
           },
           "gridPos": {
             "h": 8,
@@ -319,7 +328,7 @@ data:
             {
               "datasource": {
                 "type": "grafana-pyroscope-datasource",
-                "uid": "P535E52E4A2616EBE"
+                "uid": "profiles"
               },
               "groupBy": [],
               "labelSelector": "{service_name=\"random-generator\"}",
@@ -348,5 +357,130 @@ data:
       "title": "Telemetry app",
       "uid": "e9ccdb4b-5175-4c25-823f-e42893480619",
       "version": 1,
+      "weekStart": ""
+    }
+  pixie-dashboard.json: |
+    {
+      "annotations": {
+        "list": [
+          {
+            "builtIn": 1,
+            "datasource": {
+              "type": "grafana",
+              "uid": "-- Grafana --"
+            },
+            "enable": true,
+            "hide": true,
+            "iconColor": "rgba(0, 211, 255, 1)",
+            "name": "Annotations & Alerts",
+            "type": "dashboard"
+          }
+        ]
+      },
+      "editable": true,
+      "fiscalYearStartMonth": 0,
+      "graphTooltip": 0,
+      "id": 2,
+      "links": [],
+      "panels": [
+        {
+          "datasource": {
+            "type": "pixie-pixie-datasource",
+            "uid": "pixie"
+          },
+          "gridPos": {
+            "h": 15,
+            "w": 24,
+            "x": 0,
+            "y": 0
+          },
+          "id": 2,
+          "options": {
+            "edges": {},
+            "nodes": {}
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "pixie-pixie-datasource",
+                "uid": "pixie"
+              },
+              "queryBody": {
+                "pxlScript": "# Copyright 2018- The Pixie Authors.\n#\n# Licensed under the Apache License, Version 2.0 (the \"License\");\n# you may not use this file except in compliance with the License.\n# You may obtain a copy of the License at\n#\n#     http://www.apache.org/licenses/LICENSE-2.0\n#\n# Unless required by applicable law or agreed to in writing, software\n# distributed under the License is distributed on an \"AS IS\" BASIS,\n# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n# See the License for the specific language governing permissions and\n# limitations under the License.\n#\n# SPDX-License-Identifier: Apache-2.0\n\n'''\nThis query outputs a graph of the network connections to, from and\nwithin your cluster. Use this query with Grafana's Node Graph panel.\n\nThis query is for use with Grafana's Pixie Datasource Plugin only,\nas it uses Grafana macros for adding Grafana dashboard context.\nThis query is a modification of the px/net_flow_graph script:\nhttps://github.com/pixie-io/pixie/tree/main/src/pxl_scripts/px/net_flow_graph\n'''\n\n# Import Pixie's module for querying data.\nimport px\n\n\ndef net_flow_graph():\n    df = px.DataFrame(table='conn_stats', start_time=__time_from)\n\n    # Add context\n    df.namespace = df.ctx['namespace']\n    df.service = df.ctx['service']\n    df.node = df.ctx['node']\n    df.pod = df.ctx['pod']\n\n    # Filter out any non k8s sources.\n    df = df[df.pod != '']\n\n    # Filter for client side requests.\n    df = df[df.trace_role == 1]\n    \n    df = df[df.namespace == 'monitoring']\n\n    # Use aggregate to pick the first and last sample for any given client-server pair.\n    # We do this by picking the min/max of the stats, since they are all counters.\n    df = df.groupby(['pod', 'upid', 'remote_addr']).agg(\n        bytes_sent_min=('bytes_sent', px.min),\n        bytes_sent_max=('bytes_sent', px.max),\n        bytes_recv_min=('bytes_recv', px.min),\n        bytes_recv_max=('bytes_recv', px.max),\n    )\n    df.bytes_sent = df.bytes_sent_max - df.bytes_sent_min\n    df.bytes_recv = df.bytes_recv_max - df.bytes_recv_min\n    df.bytes_total = df.bytes_sent + df.bytes_recv\n    df = df.drop(['bytes_sent_max', 'bytes_sent_min', 'bytes_recv_max', 'bytes_recv_min'])\n\n    # To create a graph, add 'from' and 'to' entities.\n    df.from_entity = df.pod\n    df.to_entity = px.nslookup(df.remote_addr)\n\n    # Since there may be multiple processes per pod,\n    # perform an additional aggregation to consolidate those into one entry.\n    df = df.groupby(['from_entity', 'to_entity']).agg(\n        bytes_sent=('bytes_sent', px.sum),\n        bytes_recv=('bytes_recv', px.sum),\n        bytes_total=('bytes_total', px.sum),\n    )\n\n    # Convert to kilobytes.\n    df.kbytes_sent = df.bytes_sent / 1000\n    df.kbytes_recv = df.bytes_recv / 1000\n    df.kbytes_total = df.bytes_total / 1000\n\n    # # Add optional filters:\n    # df = df[px.contains(df.from_entity, 'px-sock-shop')]\n    # df = df[px.contains(df.to_entity, '')]\n\n    return df\n\n\n# Construct the nodes table for the Node Graph panel.\n# https://grafana.com/docs/grafana/next/visualizations/node-graph/#node-parameters\ndef nodes():\n    df1 = net_flow_graph()\n    df1.id = df1.to_entity\n    df1.title = df1.to_entity\n    df1 = df1.groupby(['id', 'title']).agg()\n    df2 = net_flow_graph()\n    df2.id = df2.from_entity\n    df2.title = df2.from_entity\n    df2 = df2.groupby(['id', 'title']).agg()\n    return df1.append(df2)\n\n\n# Construct the edges table for the Node Graph panel.\n# https://grafana.com/docs/grafana/next/visualizations/node-graph/#edge-parameters\ndef edges():\n    df = net_flow_graph()\n    df.source = df.from_entity\n    df.target = df.to_entity\n    df.id = df.source + '-' + df.target\n    df.mainStat = df.kbytes_sent\n    df.secondaryStat = df.kbytes_recv\n    return df[['id', 'source', 'target', 'mainStat', 'secondaryStat']]\n\n\n# Display the tables.\nnodes_table = nodes()\nedges_table = edges()\npx.display(nodes_table, \"nodes\")\npx.display(edges_table, \"edges\")"
+              },
+              "queryMeta": {
+                "aggData": [],
+                "columnOptions": [],
+                "groupByColOptions": [],
+                "isColDisplay": false,
+                "isGroupBy": false,
+                "selectedColDisplay": [],
+                "selectedColGroupby": []
+              },
+              "queryScript": {
+                "columnOptions": [],
+                "description": "Write your own pxl query.",
+                "groupByColOptions": [],
+                "label": "Custom Query",
+                "value": {
+                  "description": "Write your own pxl query.",
+                  "name": "Custom Query",
+                  "script": "import px\n\n# Use this scratch pad to write and run one-off scripts.\n# If you switch to another script, refresh, or close this browser tab, this script will disappear.\n\n# $pixieCluster - work around to update the panel if this dashboard variable is present\n\n"
+                }
+              },
+              "queryType": "run-script",
+              "refId": "A"
+            }
+          ],
+          "title": "Network traffic",
+          "type": "nodeGraph"
+        },
+        {
+          "datasource": {
+            "type": "pixie-pixie-datasource",
+            "uid": "pixie"
+          },
+          "gridPos": {
+            "h": 20,
+            "w": 24,
+            "x": 0,
+            "y": 15
+          },
+          "id": 1,
+          "options": {
+            "edges": {},
+            "nodes": {}
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "pixie-pixie-datasource",
+                "uid": "pixie"
+              },
+              "queryBody": {
+                "pxlScript": "# Copyright 2018- The Pixie Authors.\n#\n# Licensed under the Apache License, Version 2.0 (the \"License\");\n# you may not use this file except in compliance with the License.\n# You may obtain a copy of the License at\n#\n#     http://www.apache.org/licenses/LICENSE-2.0\n#\n# Unless required by applicable law or agreed to in writing, software\n# distributed under the License is distributed on an \"AS IS\" BASIS,\n# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n# See the License for the specific language governing permissions and\n# limitations under the License.\n#\n# SPDX-License-Identifier: Apache-2.0\n\n'''\nThis query outputs a graph of the HTTP traffic between the services in\nyour cluster. Use with Grafana's node graph panel.\n\nThis query is for use with Grafana's Pixie Datasource Plugin only,\nas it uses Grafana macros for adding Grafana dashboard context.\nThe functions in this query are pulled from the px/cluster script:\nhttps://github.com/pixie-io/pixie/tree/main/src/pxl_scripts/px/cluster\n'''\n\n# Import Pixie's module for querying data.\nimport px\n\n# Window size to use on time_ column for bucketing.\nns_per_s = 1000 * 1000 * 1000\nns_per_ms = 1000 * 1000\nwindow_ns = px.DurationNanos(10 * ns_per_s)\n\n# Flag to filter out health checks from the data.\nfilter_health_checks = True\n\n# Whether or not to include traffic from IPs that don't resolve to a known pod/service.\ninclude_ips = True\n\n\ndef http_stats():\n    ''' Get a dataframe of HTTP events.\n    Certain traffic (like health checks) are auto removed, and some standard fields are added.\n    '''\n    df = px.DataFrame(table='http_events', start_time=__time_from)\n\n    # Add K8s metadata.\n    df.namespace = df.ctx['namespace']\n    df.service = df.ctx['service']\n    df.pod = df.ctx['pod']\n\n    # Add optional filters.\n    df = df[df.namespace == 'monitoring']\n    # df = df[df.service == '']\n    # df = df[df.pod == '']\n\n    # Filter out non-k8s entities.\n    df = df[df.pod != '']\n\n    # Snap timestamps to bins.\n    df.timestamp = px.bin(df.time_, window_ns)\n\n    # Additional HTTP fields, pre-computed for convenience.\n    df.failure = df.resp_status >= 400\n\n    # Remove health checks, and anything with no remote address.\n    health_check_req = ((df.req_path == '/healthz' or df.req_path == '/readyz') or\n                        df.req_path == '/livez')\n    filter_out_conds = (health_check_req and filter_health_checks) or (df['remote_addr'] == '-')\n    df = df[not filter_out_conds]\n\n    return df\n\n\ndef service_let_graph():\n    ''' Compute a summary of traffic by requesting service, for requests on services\n        in the current cluster. Similar to `inbound_let_summary` but also breaks down\n        by pod in addition to service.\n    '''\n    df = http_stats()\n    df = df.groupby(['timestamp', 'service', 'remote_addr', 'pod', 'trace_role']).agg(\n        latency_quantiles=('latency', px.quantiles),\n        error_rate=('failure', px.mean),\n        throughput_total=('latency', px.count),\n        inbound_bytes_total=('req_body_size', px.sum),\n        outbound_bytes_total=('resp_body_size', px.sum)\n    )\n\n    # Get the traced and remote pod/service/IP information.\n    df.traced_pod = df.pod\n    df.traced_svc = df.service\n    df.traced_ip = px.pod_name_to_pod_ip(df.pod)\n    df.remote_pod = px.pod_id_to_pod_name(px.ip_to_pod_id(df.remote_addr))\n    df.remote_svc = px.service_id_to_service_name(px.ip_to_service_id(df.remote_addr))\n    df.remote_ip = df.remote_addr\n    # If external IPs are excluded in the service graph, then we also exclude any\n    # traffic where we don't know the remote pod or remote service name.\n    df = df[include_ips or (df.remote_pod != '' or df.remote_svc != '')]\n\n    # Associate it with Client/Server roles, based on the trace role.\n    df.is_server_side_tracing = df.trace_role == 2\n    df.responder_pod = px.select(df.is_server_side_tracing, df.traced_pod, df.remote_pod)\n    df.requestor_pod = px.select(df.is_server_side_tracing, df.remote_pod, df.traced_pod)\n    df.responder_service = px.select(df.is_server_side_tracing, df.traced_svc, df.remote_svc)\n    df.requestor_service = px.select(df.is_server_side_tracing, df.remote_svc, df.traced_svc)\n    df.responder_ip = px.select(df.is_server_side_tracing, df.traced_ip, df.remote_ip)\n    df.requestor_ip = px.select(df.is_server_side_tracing, df.remote_ip, df.traced_ip)\n\n    # Compute statistics about each edge of the service graph.\n    df.latency_p50 = px.DurationNanos(px.floor(px.pluck_float64(df.latency_quantiles, 'p50')))\n    df.latency_p90 = px.DurationNanos(px.floor(px.pluck_float64(df.latency_quantiles, 'p90')))\n    df.latency_p99 = px.DurationNanos(px.floor(px.pluck_float64(df.latency_quantiles, 'p99')))\n    df.request_throughput = df.throughput_total / window_ns\n    df.inbound_throughput = df.inbound_bytes_total / window_ns\n    df.outbound_throughput = df.outbound_bytes_total / window_ns\n    df.error_rate = px.Percent(df.error_rate)\n    return df.groupby(['responder_pod', 'requestor_pod', 'responder_service',\n                       'requestor_service', 'responder_ip', 'requestor_ip']).agg(\n        latency_p50=('latency_p50', px.mean),\n        latency_p90=('latency_p90', px.mean),\n        latency_p99=('latency_p99', px.mean),\n        request_throughput=('request_throughput', px.mean),\n        error_rate=('error_rate', px.mean),\n        inbound_throughput=('inbound_throughput', px.mean),\n        outbound_throughput=('outbound_throughput', px.mean),\n        throughput_total=('throughput_total', px.sum)\n    )\n\n\ndef graphnode_sources():\n    df = service_let_graph()\n    # Use Pod name for source node id and title. If pod name is not available,\n    # use service name or IP address.\n    df.source_svc_ip = px.select(df.requestor_service != '', df.requestor_service, df.requestor_ip)\n    df.id = px.select(df.requestor_pod != '', df.requestor_pod, df.source_svc_ip)\n    df.title = df.id\n    df = df.groupby(['id', 'title']).agg()\n    return df\n\n\ndef graphnode_targets():\n    df = service_let_graph()\n    # Use Pod name for target node id and title. If pod name is not available,\n    # use service name or IP address.\n    df.target_svc_ip = px.select(df.responder_service != '', df.responder_service, df.responder_ip)\n    df.id = px.select(df.responder_pod != '', df.responder_pod, df.target_svc_ip)\n    df.title = df.id\n    df = df.groupby(['id', 'title']).agg()\n    return df\n\n\ndef nodes():\n    node_sources = graphnode_sources()\n    node_targets = graphnode_targets()\n    df = node_sources.append(node_targets)\n    return df\n\n\ndef edges():\n    df = service_let_graph()\n    df.source_svc_ip = px.select(df.requestor_service != '', df.requestor_service, df.requestor_ip)\n    df.source = px.select(df.requestor_pod != '', df.requestor_pod, df.source_svc_ip)\n    df.target_svc_ip = px.select(df.responder_service != '', df.responder_service, df.responder_ip)\n    df.target = px.select(df.responder_pod != '', df.responder_pod, df.target_svc_ip)\n    df.id = df.source + '-' + df.target\n    df.mainStat = df.error_rate * 100\n    df.secondaryStat = df.latency_p90 / ns_per_ms\n    return df[['id', 'source', 'target', 'mainStat', 'secondaryStat']]\n\n\nnodes_table = nodes()\nedges_table = edges()\npx.display(nodes_table, \"nodes\")\npx.display(edges_table, \"edges\")"
+              },
+              "queryType": "run-script",
+              "refId": "A"
+            }
+          ],
+          "title": "HTTP traffic",
+          "type": "nodeGraph"
+        }
+      ],
+      "schemaVersion": 39,
+      "tags": [],
+      "templating": {
+        "list": []
+      },
+      "time": {
+        "from": "now-6h",
+        "to": "now"
+      },
+      "timepicker": {},
+      "timezone": "browser",
+      "title": "Pixie",
+      "uid": "adfyo1tevlqf4e",
+      "version": 3,
       "weekStart": ""
     }

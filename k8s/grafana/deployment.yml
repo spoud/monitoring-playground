@@ -26,6 +26,9 @@ spec:
             - containerPort: 3000
               name: http-grafana
               protocol: TCP
+          env:
+            - name: GF_INSTALL_PLUGINS
+              value: pixie-pixie-datasource
           readinessProbe:
             failureThreshold: 3
             httpGet:
@@ -78,4 +81,6 @@ spec:
             items:
               - key: app-dashboard.json
                 path: app-dashboard.json
+              - key: pixie-dashboard.json
+                path: pixie-dashboard.json
           name: custom-dashboards
