@@ -1,9 +1,8 @@
 package org.acme.telemetry.resources;
 
-import io.opentelemetry.api.GlobalOpenTelemetry;
-import io.opentelemetry.api.common.AttributeKey;
-import io.opentelemetry.api.common.Attributes;
-import io.opentelemetry.api.metrics.LongCounter;
+import io.micrometer.core.annotation.Counted;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
@@ -17,14 +16,15 @@ public class HelloResource {
   @Inject
   private HelloService service;
 
-  private LongCounter helloCounter = GlobalOpenTelemetry.get().getMeter(HelloResource.class.getName()).counterBuilder("hello-counter").build();
+  @Inject
+  private MeterRegistry meterRegistry;
 
   @GET
   @Path("hello/{name}")
-  public String hello(@PathParam("name") String name) {
+  public String hello(@PathParam("name") String name) throws InterruptedException {
     service.sayHello(name);
-    helloCounter.add(1, Attributes.of(AttributeKey.stringKey("name"), name));
-    return name;
+    Counter.builder("hello-counter").tag("name", name).register(meterRegistry).increment();
+    return String.format("Hello %s", name);
   }
 
 }

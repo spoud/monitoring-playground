@@ -59,7 +59,7 @@ spec:
             - name: PYROSCOPE_UPLOAD_INTERVAL
               value: 15s
             - name: PYROSCOPE_LOG_LEVEL
-              value: debug
+              value: info
             - name: PYROSCOPE_SERVER_ADDRESS
               value: http://pyroscope:4040
           resources:

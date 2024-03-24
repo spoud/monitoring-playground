@@ -9,13 +9,14 @@ repositories {
 }
 
 dependencies {
+    implementation 'io.quarkus:quarkus-micrometer:3.9.0'
+    implementation("io.opentelemetry.instrumentation:opentelemetry-micrometer-1.5:2.0.0")
     implementation 'io.quarkus:quarkus-rest-client-reactive-jackson'
     implementation enforcedPlatform("${quarkusPlatformGroupId}:${quarkusPlatformArtifactId}:${quarkusPlatformVersion}")
     implementation 'io.quarkus:quarkus-resteasy-reactive'
     implementation 'io.quarkus:quarkus-arc'
     implementation 'io.quarkus:quarkus-smallrye-reactive-messaging-kafka'
 
-    implementation 'io.opentelemetry:opentelemetry-api:1.43.1'
     implementation 'io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations:2.0.0'
 
     testImplementation 'io.quarkus:quarkus-junit5'
@@ -43,7 +44,7 @@ compileTestJava {
 
 quarkusDev {
 //    jvmArgs += "-javaagent:${layout.projectDirectory.getAsFile()}/opentelemetry-javaagent.jar"
-//    jvmArgs += '-Dotel.traces.exporter=logging-otlp'
+//    jvmArgs += '-Dotel.traces.exporter=none'
 //    jvmArgs += '-Dotel.metrics.exporter=logging-otlp'
-//    jvmArgs += '-Dotel.logs.exporter=logging-otlp'
+//    jvmArgs += '-Dotel.logs.exporter=none'
 }

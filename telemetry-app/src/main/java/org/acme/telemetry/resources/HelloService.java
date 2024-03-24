@@ -4,9 +4,6 @@ import io.opentelemetry.instrumentation.annotations.SpanAttribute;
 import io.opentelemetry.instrumentation.annotations.WithSpan;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import java.util.Arrays;
-import java.util.Random;
-import java.util.stream.LongStream;
 import org.eclipse.microprofile.reactive.messaging.Channel;
 import org.eclipse.microprofile.reactive.messaging.Emitter;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
@@ -23,14 +20,21 @@ public class HelloService {
   @RestClient
   RandomNumberService randomNumberService;
 
-  Random random = new Random();
-
   @WithSpan
-  public void sayHello(@SpanAttribute String name) {
+  public void sayHello(@SpanAttribute String name) throws InterruptedException {
     long r = randomNumberService.get();
 
     LOG.info(String.format("I said hello to %s", name));
-    LOG.info(r);
-    helloEmitter.send(name);
+    var what = Math.floorMod(r, 5);
+    switch (what) {
+      case 0:
+        throw new RuntimeException(String.format("%s messed up", name));
+      case 1:
+        Thread.sleep(5000);
+        break;
+      default:
+        helloEmitter.send(name);
+        break;
+    }
   }
 }

@@ -13,7 +13,7 @@ public class RandomService {
 
   @WithSpan
   public long get() {
-    var longs = LongStream.rangeClosed(0, 10000000).map((x) -> random.nextLong()).toArray();
+    var longs = LongStream.rangeClosed(0, 5_000_000).map((x) -> random.nextLong()).toArray();
     Arrays.sort(longs);
     return (long)Math.floor(Arrays.stream(longs).average().orElse(0));
   }
