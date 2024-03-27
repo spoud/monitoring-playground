@@ -4,21 +4,14 @@
 
 ```bash
 # Build docker images
+export QUARKUS_CONTAINER_IMAGE_GROUP=docker.collaud.me
 cd telemetry-app && quarkus image build docker && cd ..
 cd random-generator && quarkus image build docker && cd ..
-docker build -t stmichael/kafka:latest k8s/kafka
+docker build -t docker.collaud.me/kafka:latest k8s/kafka
 
-# Setup minikube
-minikube start --driver=kvm2 --cni=flannel --cpus=4 --memory=8000
-docker image save -o telemetry-app.tar stmichael/telemetry-app:1.5.0-SNAPSHOT
-minikube image load telemetry-app.tar
-rm telemetry-app.tar
-docker image save -o random-generator.tar stmichael/random-generator:1.0.0-SNAPSHOT
-minikube image load random-generator.tar
-rm random-generator.tar
-docker image save -o kafka.tar stmichael/kafka:latest
-minikube image load kafka.tar
-rm kafka.tar
+docker push docker.collaud.me/telemetry-app:1.5.0-SNAPSHOT
+docker push docker.collaud.me/random-generator:1.0.0-SNAPSHOT
+docker push docker.collaud.me/kafka:latest
 
 # Deploy the stuff
 kubectl create namespace monitoring

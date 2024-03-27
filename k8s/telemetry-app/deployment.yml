@@ -15,10 +15,12 @@ spec:
       labels:
         app.kubernetes.io/name: telemetry-app
     spec:
+      imagePullSecrets:
+        - name: regcred
       containers:
         - name: telemetry-app
-          image: stmichael/telemetry-app:1.5.0-SNAPSHOT
-          imagePullPolicy: Never
+          image: docker.collaud.me/telemetry-app:1.5.0-SNAPSHOT
+          imagePullPolicy: Always
           ports:
             - containerPort: 8080
           env:

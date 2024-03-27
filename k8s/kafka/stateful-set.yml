@@ -20,9 +20,11 @@ spec:
         app.kubernetes.io/name: kafka
         app.kubernetes.io/instance: kafka
     spec:
+      imagePullSecrets:
+        - name: regcred
       containers:
-      - image: stmichael/kafka:latest
-        imagePullPolicy: IfNotPresent
+      - image: docker.collaud.me/kafka:latest
+        imagePullPolicy: Always
         name: kafka
         env:
         - name: KAFKA_CFG_NODE_ID

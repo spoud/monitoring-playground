@@ -15,10 +15,12 @@ spec:
       labels:
         app.kubernetes.io/name: random-generator
     spec:
+      imagePullSecrets:
+        - name: regcred
       containers:
         - name: random-generator
-          image: stmichael/random-generator:1.0.0-SNAPSHOT
-          imagePullPolicy: Never
+          image: docker.collaud.me/random-generator:1.0.0-SNAPSHOT
+          imagePullPolicy: Always
           ports:
             - containerPort: 8080
           env:
