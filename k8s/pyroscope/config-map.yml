@@ -28,4 +28,6 @@ metadata:
     app.kubernetes.io/managed-by: Helm
 data:
   config.yaml: |
-    {}
+    tracing:
+      enabled: true
+      profiling_enabled: true
