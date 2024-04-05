@@ -1,44 +1,32 @@
 ---
 apiVersion: apps/v1
-kind: DaemonSet
+kind: Deployment
 metadata:
-  name: otel-collector
+  name: app-otel-collector
   namespace: monitoring
   labels:
     app.kubernetes.io/name: opentelemetry-collector
-    app.kubernetes.io/instance: otel-collector
+    app.kubernetes.io/instance: app-otel-collector
     app.kubernetes.io/version: "0.92.0"
 
 spec:
+  replicas: 1
   selector:
     matchLabels:
       app.kubernetes.io/name: opentelemetry-collector
-      app.kubernetes.io/instance: otel-collector
-      component: agent-collector
-  updateStrategy:
-    type: RollingUpdate
+      app.kubernetes.io/instance: app-otel-collector
   template:
     metadata:
-      annotations:
-        checksum/config: b5ab32f17f174126d6212d362ab3a64faddc1af9a8359ffea11472b5a00ba84e
-
       labels:
         app.kubernetes.io/name: opentelemetry-collector
-        app.kubernetes.io/instance: otel-collector
-        component: agent-collector
-
+        app.kubernetes.io/instance: app-otel-collector
     spec:
-
-      serviceAccountName: otel-collector
-      securityContext:
-        {}
+      serviceAccountName: app-otel-collector
       containers:
         - name: opentelemetry-collector
           command:
             - /otelcol-contrib
             - --config=/conf/relay.yaml
-          securityContext:
-            {}
           image: "otel/opentelemetry-collector-contrib:0.92.0"
           imagePullPolicy: IfNotPresent
           ports:
@@ -76,7 +64,7 @@ spec:
       volumes:
         - name: opentelemetry-collector-configmap
           configMap:
-            name: otel-collector
+            name: app-otel-collector
             items:
               - key: relay
                 path: relay.yaml

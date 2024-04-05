@@ -2,13 +2,14 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: otel-collector
+  name: cluster-otel-collector
   labels:
     app.kubernetes.io/name: opentelemetry-collector
-    app.kubernetes.io/instance: otel-collector
+    app.kubernetes.io/instance: cluster-otel-collector
     app.kubernetes.io/version: "0.92.0"
 
 rules:
+  # k8sclusterreceiver
   - apiGroups: [""]
     resources:
       - events
@@ -30,6 +31,12 @@ rules:
       - replicasets
       - statefulsets
     verbs: ["get", "list", "watch"]
+  - apiGroups: ["extensions"]
+    resources:
+      - daemonsets
+      - deployments
+      - replicasets
+    verbs: ["get", "list", "watch"]
   - apiGroups:
     - batch
     resources:
@@ -39,18 +46,6 @@ rules:
     - get
     - list
     - watch
-  - apiGroups: ["extensions"]
-    resources:
-      - daemonsets
-      - deployments
-      - replicasets
-    verbs: ["get", "list", "watch"]
-  - apiGroups: [""]
-    resources: ["nodes/stats"]
-    verbs: ["get"]
-  - apiGroups: [""]
-    resources: ["nodes/proxy"]
-    verbs: ["get"]
   - apiGroups: ["autoscaling"]
     resources:
       - horizontalpodautoscalers
@@ -58,3 +53,10 @@ rules:
       - get
       - list
       - watch
+  # kubeletsstatsreceiver
+  - apiGroups: [""]
+    resources: ["nodes/stats"]
+    verbs: ["get"]
+  - apiGroups: [""]
+    resources: ["nodes/proxy"]
+    verbs: ["get"]
