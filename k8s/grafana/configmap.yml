@@ -76,11 +76,20 @@ data:
     apiVersion: 1
 
     providers:
-    - name: 'test'
-      type: file
-      options:
-        path: /etc/dashboards
-        foldersFromFilesStructure: true
+      - name: 'cluster'
+        folder: 'Cluster'
+        type: file
+        disableDeletion: false
+        editable: true
+        options:
+          path: /etc/dashboards/cluster
+      - name: 'app'
+        folder: 'app'
+        type: file
+        disableDeletion: false
+        editable: true
+        options:
+          path: /etc/dashboards/app
   app-dashboard.json: |
     {
       "annotations": {

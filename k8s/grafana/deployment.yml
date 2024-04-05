@@ -29,6 +29,8 @@ spec:
           env:
             - name: GF_INSTALL_PLUGINS
               value: pixie-pixie-datasource
+            - name: GF_DATABASE_WAL
+              value: 'true'
           readinessProbe:
             failureThreshold: 3
             httpGet:
@@ -59,7 +61,9 @@ spec:
             - name: grafana-dashboards
               mountPath: /etc/grafana/provisioning/dashboards
             - name: custom-dashboards
-              mountPath: /etc/dashboards
+              mountPath: /etc/dashboards/app
+            - name: cluster-dashboards
+              mountPath: /etc/dashboards/cluster
       volumes:
         - name: grafana-pv
           persistentVolumeClaim:
@@ -84,3 +88,9 @@ spec:
               - key: pixie-dashboard.json
                 path: pixie-dashboard.json
           name: custom-dashboards
+        - configMap:
+            name: cluster-dashboards-grafana
+            items:
+              - key: cluster.json
+                path: cluster.json
+          name: cluster-dashboards
