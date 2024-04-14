@@ -1,0 +1,36 @@
+apiVersion: opentelemetry.io/v1alpha1
+kind: Instrumentation
+metadata:
+  name: app-instrumentation
+  namespace: monitoring
+spec:
+  exporter:
+    endpoint: http://app-collector:4317
+  propagators:
+    - tracecontext
+    - baggage
+  sampler:
+    type: parentbased_always_on
+  env:
+    # - name: POD_UID
+    #   valueFrom:
+    #     fieldRef:
+    #       fieldPath: metadata.uid
+    # - name: POD_NAME
+    #   valueFrom:
+    #     fieldRef:
+    #       fieldPath: metadata.name
+    # - name: OTEL_SERVICE_NAME
+    #   value: random-generator
+    # - name: OTEL_LOGS_EXPORTER
+    #   value: otlp
+    # - name: OTEL_METRICS_EXPORTER
+    #   value: otlp
+    # - name: OTEL_TRACES_EXPORTER
+    #   value: otlp
+    # - name: OTEL_RESOURCE_ATTRIBUTES
+    #   value: service.instance.id=$(POD_NAME),k8s.pod.uid=$(POD_UID)
+  # java:
+  #   env:
+  #     - name: OTEL_EXPORTER_OTLP_ENDPOINT
+  #       value: http://app-collector:4317

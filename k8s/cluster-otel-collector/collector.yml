@@ -1,15 +1,18 @@
----
-apiVersion: v1
-kind: ConfigMap
+apiVersion: opentelemetry.io/v1alpha1
+kind: OpenTelemetryCollector
 metadata:
-  name: cluster-otel-collector
+  name: cluster
   namespace: monitoring
-  labels:
-    app.kubernetes.io/name: opentelemetry-collector
-    app.kubernetes.io/instance: cluster-otel-collector
-    app.kubernetes.io/version: "0.92.0"
-data:
-  relay: |
+spec:
+  mode: daemonset
+  image: otel/opentelemetry-collector-k8s:0.98.0
+  serviceAccount: cluster-otel-collector
+  env:
+    - name: K8S_NODE_NAME
+      valueFrom:
+        fieldRef:
+          fieldPath: spec.nodeName
+  config: |
     extensions:
       health_check: {}
 

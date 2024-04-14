@@ -14,6 +14,8 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: random-generator
+      annotations:
+        instrumentation.opentelemetry.io/inject-java: "true"
     spec:
       containers:
         - name: random-generator
@@ -22,28 +24,10 @@ spec:
           ports:
             - containerPort: 8080
           env:
-            - name: POD_UID
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.uid
-            - name: POD_NAME
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.name
             - name: OTEL_SERVICE_NAME
               value: random-generator
-            - name: OTEL_LOGS_EXPORTER
-              value: otlp
-            - name: OTEL_METRICS_EXPORTER
-              value: otlp
-            - name: OTEL_TRACES_EXPORTER
-              value: otlp
-            - name: OTEL_EXPORTER_OTLP_ENDPOINT
-              value: http://app-otel-collector:4318
-            - name: OTEL_EXPORTER_OTLP_PROTOCOL
-              value: http/protobuf
-            - name: OTEL_RESOURCE_ATTRIBUTES
-              value: service.instance.id=$(POD_NAME),k8s.pod.uid=$(POD_UID)
+            - name: OTEL_PYROSCOPE_START_PROFILING
+              value: 'true'
             - name: PYROSCOPE_APPLICATION_NAME
               value: random-generator
             - name: PYROSCOPE_FORMAT

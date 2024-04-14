@@ -87,12 +87,11 @@ COPY --chown=185 build/quarkus-app/lib/ /deployments/lib/
 COPY --chown=185 build/quarkus-app/*.jar /deployments/
 COPY --chown=185 build/quarkus-app/app/ /deployments/app/
 COPY --chown=185 build/quarkus-app/quarkus/ /deployments/quarkus/
-RUN curl -L -o /deployments/opentelemetry-javaagent.jar https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/latest/download/opentelemetry-javaagent.jar
 RUN curl -L -o /deployments/pyroscope.jar https://github.com/grafana/pyroscope-java/releases/download/v0.13.0/pyroscope.jar
 
 EXPOSE 8080
 USER 185
-ENV JAVA_OPTS_APPEND="-Dquarkus.http.host=0.0.0.0 -Djava.util.logging.manager=org.jboss.logmanager.LogManager -javaagent:/deployments/opentelemetry-javaagent.jar -javaagent:/deployments/pyroscope.jar"
+ENV JAVA_OPTS_APPEND="-Dquarkus.http.host=0.0.0.0 -Djava.util.logging.manager=org.jboss.logmanager.LogManager -javaagent:/deployments/pyroscope.jar"
 ENV JAVA_APP_JAR="/deployments/quarkus-run.jar"
 
 ENTRYPOINT [ "/opt/jboss/container/java/run/run-java.sh" ]

@@ -20,6 +20,10 @@ docker image save -o kafka.tar stmichael/kafka:latest
 minikube image load kafka.tar
 rm kafka.tar
 
+# Install Otel operator
+kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.14.4/cert-manager.yaml
+kubectl apply -f https://github.com/open-telemetry/opentelemetry-operator/releases/latest/download/opentelemetry-operator.yaml
+
 # Deploy the stuff
 kubectl create namespace monitoring
 kubectl apply -f k8s/loki
