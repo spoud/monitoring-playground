@@ -6,7 +6,7 @@
 # Build docker images
 cd telemetry-app && quarkus image build docker && cd ..
 cd random-generator && quarkus image build docker && cd ..
-docker build -t stmichael/kafka:latest k8s/kafka
+cd consumer && quarkus image build docker && cd ..
 
 # Setup minikube
 minikube start --driver=kvm2 --cni=flannel --cpus=4 --memory=8000
@@ -16,13 +16,16 @@ rm telemetry-app.tar
 docker image save -o random-generator.tar stmichael/random-generator:1.0.0-SNAPSHOT
 minikube image load random-generator.tar
 rm random-generator.tar
-docker image save -o kafka.tar stmichael/kafka:latest
-minikube image load kafka.tar
-rm kafka.tar
+docker image save -o consumer.tar stmichael/consumer:1.0.0-SNAPSHOT
+minikube image load consumer.tar
+rm consumer.tar
 
 # Install Otel operator
 kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.14.4/cert-manager.yaml
 kubectl apply -f https://github.com/open-telemetry/opentelemetry-operator/releases/latest/download/opentelemetry-operator.yaml
+
+# Install Strimzi
+helm install strimzi-cluster-operator oci://quay.io/strimzi-helm/strimzi-kafka-operator --values kafka/values.yml
 
 # Deploy the stuff
 kubectl create namespace monitoring
@@ -31,9 +34,13 @@ kubectl apply -f k8s/tempo
 kubectl apply -f k8s/prometheus
 kubectl apply -f k8s/pyroscope
 kubectl apply -f k8s/grafana
-kubectl apply -f k8s/otel-collector
+kubectl apply -f k8s/app-otel-collector
+kubectl apply -f k8s/kafka-otel-collector
+kubectl apply -f k8s/cluster-otel-collector
 kubectl apply -f k8s/kafka
 kubectl apply -f k8s/random-generator
+kubectl apply -f k8s/consumer
+kubectl apply -f k8s/consumer2
 kubectl apply -f k8s/telemetry-app
 ```
 
