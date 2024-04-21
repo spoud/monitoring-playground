@@ -1,0 +1,123 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: alloy-kafka
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/name: alloy
+    app.kubernetes.io/instance: kafka
+data:
+  config.alloy: |-
+    logging {
+    	level  = "info"
+    	format = "logfmt"
+    }
+
+    declare "discover_kafka_pods" {
+      discovery.kubernetes "kafka" {
+        role = "pod"
+        selectors {
+          role = "pod"
+          label = "strimzi.io/component-type=kafka"
+        }
+      }
+
+      discovery.kubernetes "kafka_exporter_pods" {
+        role = "pod"
+        selectors {
+          role = "pod"
+          label = "strimzi.io/component-type=kafka-exporter"
+        }
+      }
+
+      discovery.relabel "kafka" {
+        targets = discovery.kubernetes.kafka.targets
+
+        rule {
+          action = "keep"
+          source_labels = ["__meta_kubernetes_pod_container_port_number"]
+          regex = "9404"
+        }
+      }
+
+      export "targets" {
+        value = concat(discovery.relabel.kafka.output, discovery.kubernetes.kafka_exporter_pods.targets)
+      }
+    }
+
+    declare "relabel_kafka_pods" {
+      argument "targets" {
+        optional = false
+      }
+
+      discovery.relabel "add_k8s_metrics" {
+        targets = argument.targets.value
+
+        rule {
+          action = "labelmap"
+          regex = "__meta_kubernetes_namespace"
+          replacement = "k8s_namespace"
+        }
+
+        rule {
+          action = "labelmap"
+          regex = "__meta_kubernetes_pod_name"
+          replacement = "k8s_pod_name"
+        }
+
+        rule {
+          action = "labelmap"
+          regex = "__meta_kubernetes_pod_controller_name"
+          replacement = "k8s_pod_controller_name"
+        }
+
+        rule {
+          action = "labelmap"
+          regex = "__meta_kubernetes_pod_label_strimzi_io_cluster"
+          replacement = "kafka_cluster"
+        }
+      }
+
+      export "targets" {
+        value = discovery.relabel.add_k8s_metrics.output
+      }
+    }
+
+    declare "save_metrics" {
+      argument "targets" {
+        optional = false
+      }
+
+      prometheus.scrape "kafka" {
+        targets = argument.targets.value
+
+        forward_to = [prometheus.relabel.k8s_kafka_metrics.receiver]
+
+        scrape_interval = "20s"
+        metrics_path    = "/metrics"
+      }
+
+      prometheus.relabel "k8s_kafka_metrics" {
+        forward_to = [prometheus.remote_write.prometheus.receiver]
+
+        rule {
+          action = "labeldrop"
+          regex = "instance|job"
+        }
+      }
+
+      prometheus.remote_write "prometheus" {
+        endpoint {
+          url = "http://prometheus:9090/api/v1/write"
+        }
+      }
+    }
+
+    discover_kafka_pods "kafka" {}
+    relabel_kafka_pods "kafka" {
+      targets = discover_kafka_pods.kafka.targets
+    }
+    save_metrics "kafka" {
+      targets = relabel_kafka_pods.kafka.targets
+    }
