@@ -39,6 +39,9 @@ data:
             filterByTraceID: true
             filterBySpanID: false
             customQuery: false
+            tags:
+              - key: 'service.name'
+                value: 'job'
           tracesToProfiles:
             datasourceUid: 'profiles'
             tags:

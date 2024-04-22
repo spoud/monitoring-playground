@@ -1,0 +1,143 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: alloy-apps
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/name: alloy
+    app.kubernetes.io/instance: apps
+data:
+  config.alloy: |-
+    logging {
+    	level  = "info"
+    	format = "logfmt"
+    }
+
+    declare "transform_log_to_loki" {
+      argument "forward_to" {
+        optional = false
+      }
+
+      otelcol.processor.transform "add_trace_as_label" {
+        error_mode = "ignore"
+
+        log_statements {
+          context = "log"
+          statements = [
+            `set(attributes["trace_id"], trace_id.string)`,
+            `set(attributes["span_id"], span_id.string)`,
+          ]
+        }
+
+        output {
+          logs = [otelcol.processor.attributes.add_loki_label_hint.input]
+        }
+      }
+
+      otelcol.processor.attributes "add_loki_label_hint" {
+        action {
+          action = "insert"
+          key = "loki.attribute.labels"
+          value = "trace_id, span_id"
+        }
+
+        output {
+          logs = [otelcol.exporter.loki.default.input]
+        }
+      }
+
+      otelcol.exporter.loki "default" {
+        forward_to = argument.forward_to.value
+      }
+
+      export "input" {
+        value = otelcol.processor.transform.add_trace_as_label.input
+      }
+    }
+
+    declare "transform_metric_to_prometheus" {
+      argument "forward_to" {
+        optional = false
+      }
+
+      otelcol.processor.transform "add_resource_attributes" {
+        error_mode = "ignore"
+
+        metric_statements {
+          context = "datapoint"
+          statements = [
+            `set(attributes["k8s.namespace.name"], resource.attributes["k8s.namespace.name"])`,
+            `set(attributes["k8s.deployment.name"], resource.attributes["k8s.deployment.name"])`,
+            `set(attributes["k8s.pod.name"], resource.attributes["k8s.pod.name"])`,
+            `delete_key(attributes, "job")`,
+          ]
+        }
+
+        output {
+          metrics = [otelcol.exporter.prometheus.default.input]
+        }
+      }
+
+      otelcol.exporter.prometheus "default" {
+        forward_to = [prometheus.relabel.k8s_kafka_metrics.receiver]
+      }
+
+      prometheus.relabel "k8s_kafka_metrics" {
+        forward_to = argument.forward_to.value
+
+        rule {
+          action = "labeldrop"
+          regex = "instance|job"
+        }
+      }
+
+      export "input" {
+        value = otelcol.processor.transform.add_resource_attributes.input
+      }
+    }
+
+    otelcol.receiver.otlp "default" {
+      http {}
+      grpc {}
+
+      output {
+        metrics = [transform_metric_to_prometheus.default.input]
+        logs    = [transform_log_to_loki.default.input]
+        traces  = [otelcol.exporter.otlphttp.tempo.input]
+      }
+    }
+
+    transform_metric_to_prometheus "default" {
+      forward_to = [prometheus.remote_write.prometheus.receiver]
+    }
+
+    transform_log_to_loki "default" {
+      forward_to = [loki.write.local.receiver]
+    }
+
+    otelcol.exporter.logging "default" {
+      verbosity           = "detailed"
+    }
+
+    loki.write "local" {
+      endpoint {
+        url = "http://loki:3100/loki/api/v1/push"
+      }
+    }
+
+    otelcol.exporter.otlphttp "tempo" {
+      client {
+        endpoint = "http://tempo:4318"
+        tls {
+          insecure             = true
+          insecure_skip_verify = true
+        }
+      }
+    }
+
+    prometheus.remote_write "prometheus" {
+      endpoint {
+        url = "http://prometheus:9090/api/v1/write"
+      }
+    }
