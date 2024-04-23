@@ -34,10 +34,11 @@ kubectl apply -f k8s/tempo
 kubectl apply -f k8s/prometheus
 kubectl apply -f k8s/pyroscope
 kubectl apply -f k8s/grafana
-kubectl apply -f k8s/app-otel-collector
-kubectl apply -f k8s/kafka-otel-collector
+kubectl apply -f k8s/alloy-otlp
+kubectl apply -f k8s/alloy-profiling
+kubectl apply -f k8s/alloy-kafka
 kubectl apply -f k8s/cluster-otel-collector
-kubectl apply -f k8s/kafka
+kubectl apply -f k8s/kafka/kafka.yml
 kubectl apply -f k8s/random-generator
 kubectl apply -f k8s/consumer
 kubectl apply -f k8s/consumer2
