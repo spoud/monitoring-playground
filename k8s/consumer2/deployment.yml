@@ -16,6 +16,7 @@ spec:
         app.kubernetes.io/name: consumer2
       annotations:
         instrumentation.opentelemetry.io/inject-java: "true"
+        monitoring.spoud.io/profiling: "true"
     spec:
       containers:
         - name: consumer2
@@ -28,28 +29,8 @@ spec:
               value: consumer2
             - name: OTEL_SERVICE_NAME
               value: consumer2
-            - name: OTEL_PYROSCOPE_START_PROFILING
-              value: 'true'
             - name: OTEL_INSTRUMENTATION_MESSAGING_EXPERIMENTAL_RECEIVE_TELEMETRY_ENABLED
               value: 'true'
-            - name: PYROSCOPE_APPLICATION_NAME
-              value: consumer2
-            - name: PYROSCOPE_FORMAT
-              value: jfr
-            - name: PYROSCOPE_PROFILING_INTERVAL
-              value: 10ms
-            - name: PYROSCOPE_PROFILER_EVENT
-              value: itimer
-            - name: PYROSCOPE_PROFILER_LOCK
-              value: 10ms
-            - name: PYROSCOPE_PROFILER_ALLOC
-              value: 512k
-            - name: PYROSCOPE_UPLOAD_INTERVAL
-              value: 15s
-            - name: PYROSCOPE_LOG_LEVEL
-              value: info
-            - name: PYROSCOPE_SERVER_ADDRESS
-              value: http://pyroscope:4040
           resources:
             requests:
               cpu: 500m

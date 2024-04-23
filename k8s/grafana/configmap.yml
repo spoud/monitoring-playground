@@ -36,19 +36,13 @@ data:
             datasourceUid: 'logs'
             spanStartTimeShift: '-1m'
             spanEndTimeShift: '1m'
-            filterByTraceID: true
+            filterByTraceID: false
             filterBySpanID: false
-            customQuery: false
+            customQuery: true
+            query: '{$${__tags}, trace_id="$${__span.traceId}"}'
             tags:
               - key: 'service.name'
                 value: 'job'
-          tracesToProfiles:
-            datasourceUid: 'profiles'
-            tags:
-              - key: 'service.name'
-                value: service_name
-            profileTypeId: 'process_cpu:cpu:nanoseconds:cpu:nanoseconds'
-            customQuery: false
           serviceMap:
             datasourceUid: metrics
           nodeGraph:
