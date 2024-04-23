@@ -15,7 +15,7 @@ spec:
       labels:
         app.kubernetes.io/name: consumer2
       annotations:
-        instrumentation.opentelemetry.io/inject-java: "true"
+        instrumentation.opentelemetry.io/inject-java: "full-instrumentation"
         monitoring.spoud.io/profiling: "true"
     spec:
       containers:

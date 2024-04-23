@@ -2,25 +2,25 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: alloy-apps
+  name: alloy-otlp
   namespace: monitoring
   labels:
     app.kubernetes.io/name: alloy
-    app.kubernetes.io/instance: apps
+    app.kubernetes.io/instance: otlp
     app.kubernetes.io/version: "v1.0.0"
 spec:
   replicas: 1
   selector:
     matchLabels:
       app.kubernetes.io/name: alloy
-      app.kubernetes.io/instance: apps
+      app.kubernetes.io/instance: otlp
   template:
     metadata:
       annotations:
         kubectl.kubernetes.io/default-container: alloy
       labels:
         app.kubernetes.io/name: alloy
-        app.kubernetes.io/instance: apps
+        app.kubernetes.io/instance: otlp
     spec:
       containers:
         - name: alloy
@@ -73,4 +73,4 @@ spec:
       volumes:
         - name: config
           configMap:
-            name: alloy-apps
+            name: alloy-otlp
