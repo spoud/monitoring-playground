@@ -25,7 +25,7 @@ kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/
 kubectl apply -f https://github.com/open-telemetry/opentelemetry-operator/releases/latest/download/opentelemetry-operator.yaml
 
 # Install Strimzi
-helm install strimzi-cluster-operator oci://quay.io/strimzi-helm/strimzi-kafka-operator --values kafka/values.yml
+helm install strimzi-cluster-operator oci://quay.io/strimzi-helm/strimzi-kafka-operator --values k8s/kafka/values.yml
 
 # Deploy the stuff
 kubectl create namespace monitoring
@@ -34,6 +34,7 @@ kubectl apply -f k8s/tempo
 kubectl apply -f k8s/prometheus
 kubectl apply -f k8s/pyroscope
 kubectl apply -f k8s/grafana
+kubectl apply -f k8s/instrumentation
 kubectl apply -f k8s/alloy-otlp
 kubectl apply -f k8s/alloy-profiling
 kubectl apply -f k8s/alloy-kafka
