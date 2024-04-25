@@ -80,6 +80,13 @@ data:
         editable: true
         options:
           path: /etc/dashboards/cluster
+      - name: 'kafka'
+        folder: 'Kafka'
+        type: file
+        disableDeletion: false
+        editable: true
+        options:
+          path: /etc/dashboards/kafka
       - name: 'app'
         folder: 'app'
         type: file

@@ -64,6 +64,8 @@ spec:
               mountPath: /etc/dashboards/app
             - name: cluster-dashboards
               mountPath: /etc/dashboards/cluster
+            - name: kafka-dashboards
+              mountPath: /etc/dashboards/kafka
       volumes:
         - name: grafana-pv
           persistentVolumeClaim:
@@ -94,3 +96,9 @@ spec:
               - key: cluster.json
                 path: cluster.json
           name: cluster-dashboards
+        - configMap:
+            name: kafka-dashboards-grafana
+            items:
+              - key: cluster.json
+                path: cluster.json
+          name: kafka-dashboards
