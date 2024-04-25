@@ -23,9 +23,13 @@ spec:
         auth_type: "serviceAccount"
         endpoint: "https://${env:K8S_NODE_NAME}:10250"
         insecure_skip_verify: true
+        metric_groups:
+          - node
+          - pod
+          - container
         extra_metadata_labels:
-        - container.id
-        - k8s.volume.type
+          - container.id
+          - k8s.volume.type
         k8s_api_config:
           auth_type: serviceAccount
       k8s_cluster:
@@ -44,29 +48,29 @@ spec:
         metric_statements:
         - context: datapoint
           statements:
-          - set(attributes["k8s.pod.name"], resource.attributes["k8s.pod.name"])
-          - set(attributes["k8s.namespace.name"], resource.attributes["k8s.namespace.name"])
-          - set(attributes["k8s.container.name"], resource.attributes["k8s.container.name"])
-          - set(attributes["k8s.node.name"], resource.attributes["k8s.node.name"])
+          - set(attributes["pod"], resource.attributes["k8s.pod.name"])
+          - set(attributes["namespace"], resource.attributes["k8s.namespace.name"])
+          - set(attributes["container"], resource.attributes["k8s.container.name"])
+          - set(attributes["node"], resource.attributes["k8s.node.name"])
       transform/k8-cluster-metric-labels:
         error_mode: ignore
         metric_statements:
         - context: datapoint
           statements:
-          - set(attributes["k8s.namespace.name"], resource.attributes["k8s.namespace.name"])
-          - set(attributes["k8s.node.name"], resource.attributes["k8s.node.name"])
-          - set(attributes["container.image.name"], resource.attributes["container.image.name"])
-          - set(attributes["container.image.tag"], resource.attributes["container.image.tag"])
-          - set(attributes["k8s.pod.name"], resource.attributes["k8s.pod.name"])
-          - set(attributes["k8s.container.name"], resource.attributes["k8s.container.name"])
-          - set(attributes["k8s.replicaset.name"], resource.attributes["k8s.replicaset.name"])
-          - set(attributes["k8s.replicationcontroller.name"], resource.attributes["k8s.replicationcontroller.name"])
-          - set(attributes["k8s.resourcequota.name"], resource.attributes["k8s.resourcequota.name"])
-          - set(attributes["k8s.statefulset.name"], resource.attributes["k8s.statefulset.name"])
-          - set(attributes["k8s.deployment.name"], resource.attributes["k8s.deployment.name"])
-          - set(attributes["k8s.daemonset.name"], resource.attributes["k8s.daemonset.name"])
-          - set(attributes["k8s.hpa.name"], resource.attributes["k8s.hpa.name"])
-          - set(attributes["k8s.job.name"], resource.attributes["k8s.job.name"])
+          - set(attributes["namespace"], resource.attributes["k8s.namespace.name"])
+          - set(attributes["node"], resource.attributes["k8s.node.name"])
+          - set(attributes["container_image"], resource.attributes["container.image.name"])
+          - set(attributes["container_image_tag"], resource.attributes["container.image.tag"])
+          - set(attributes["pod"], resource.attributes["k8s.pod.name"])
+          - set(attributes["container"], resource.attributes["k8s.container.name"])
+          - set(attributes["replicaset"], resource.attributes["k8s.replicaset.name"])
+          - set(attributes["replicationcontroller"], resource.attributes["k8s.replicationcontroller.name"])
+          - set(attributes["resourcequota"], resource.attributes["k8s.resourcequota.name"])
+          - set(attributes["statefulset"], resource.attributes["k8s.statefulset.name"])
+          - set(attributes["deployment"], resource.attributes["k8s.deployment.name"])
+          - set(attributes["daemonset"], resource.attributes["k8s.daemonset.name"])
+          - set(attributes["hpa"], resource.attributes["k8s.hpa.name"])
+          - set(attributes["job"], resource.attributes["k8s.job.name"])
 
     exporters:
       debug:

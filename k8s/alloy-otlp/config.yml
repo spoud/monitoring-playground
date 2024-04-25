@@ -67,9 +67,9 @@ data:
         metric_statements {
           context = "datapoint"
           statements = [
-            `set(attributes["k8s.namespace.name"], resource.attributes["k8s.namespace.name"])`,
-            `set(attributes["k8s.deployment.name"], resource.attributes["k8s.deployment.name"])`,
-            `set(attributes["k8s.pod.name"], resource.attributes["k8s.pod.name"])`,
+            `set(attributes["namespace"], resource.attributes["k8s.namespace.name"])`,
+            `set(attributes["deployment"], resource.attributes["k8s.deployment.name"])`,
+            `set(attributes["pod"], resource.attributes["k8s.pod.name"])`,
             `delete_key(attributes, "job")`,
           ]
         }

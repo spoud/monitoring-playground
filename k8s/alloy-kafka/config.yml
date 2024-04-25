@@ -57,25 +57,25 @@ data:
         rule {
           action = "labelmap"
           regex = "__meta_kubernetes_namespace"
-          replacement = "k8s_namespace"
+          replacement = "namespace"
         }
 
         rule {
           action = "labelmap"
           regex = "__meta_kubernetes_pod_name"
-          replacement = "k8s_pod_name"
+          replacement = "pod"
         }
 
         rule {
           action = "labelmap"
           regex = "__meta_kubernetes_pod_controller_name"
-          replacement = "k8s_pod_controller_name"
+          replacement = "controller"
         }
 
         rule {
           action = "labelmap"
           regex = "__meta_kubernetes_pod_label_strimzi_io_cluster"
-          replacement = "kafka_cluster"
+          replacement = "strimzi_io_cluster"
         }
       }
 
