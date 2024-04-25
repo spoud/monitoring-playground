@@ -27,6 +27,8 @@ spec:
           env:
             - name: MP_MESSAGING_INCOMING_HELLO_GROUP_ID
               value: consumer2
+            - name: KAFKA_BOOTSTRAP_SERVERS
+              value: my-cluster-kafka-bootstrap:9092
             - name: OTEL_SERVICE_NAME
               value: consumer2
             - name: OTEL_INSTRUMENTATION_MESSAGING_EXPERIMENTAL_RECEIVE_TELEMETRY_ENABLED

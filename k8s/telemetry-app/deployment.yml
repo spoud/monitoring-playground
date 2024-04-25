@@ -27,6 +27,8 @@ spec:
           env:
             - name: OTEL_SERVICE_NAME
               value: telemetry-app
+            - name: KAFKA_BOOTSTRAP_SERVERS
+              value: my-cluster-kafka-bootstrap:9092
           resources:
             requests:
               cpu: 500m
