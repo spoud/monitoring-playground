@@ -27,6 +27,7 @@ spec:
           - node
           - pod
           - container
+          - volume
         extra_metadata_labels:
           - container.id
           - k8s.volume.type

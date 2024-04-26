@@ -101,4 +101,6 @@ spec:
             items:
               - key: cluster.json
                 path: cluster.json
+              - key: kraft.json
+                path: kraft.json
           name: kafka-dashboards
